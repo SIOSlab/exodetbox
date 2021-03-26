@@ -22,7 +22,7 @@ folder = './'
 PPoutpath = './'
 
 #### Randomly Generate Orbits
-folder_load = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/Scripts'))
+folder_load = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/exo-det-box/exo-det-box/convergence_data'))
 filename = 'HabEx_CKL2_PPKL2.json'
 filename = 'WFIRSTcycle6core.json'
 filename = 'HabEx_CSAG13_PPSAG13_compSubtype.json'

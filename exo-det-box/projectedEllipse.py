@@ -3872,6 +3872,24 @@ def nukeKOE(sma,e,W,w,inc,ar,er,Wr,wr,incr):
 
 def integrationTimeAdjustedCompletness(sma,e,W,w,inc,p,Rp,starMass,plotBool,periods, s_inner, s_outer, dmag_upper, tmax):
     """ Calculates the Integration Time Adjusted Completeness
+    Args:
+        sma (ndarray):
+        e (ndarray):
+        W (ndarray):
+        w (ndarray):
+        inc (ndarray):
+        p (ndarray):
+        Rp (ndarray):
+        starMass (ndarray):
+        plotBool (ndarray):
+        periods (ndarray):
+        s_inner (ndarray):
+        s_outer (ndarray):
+        dmag_upper (ndarray):
+        tmax (ndarray):
+    Returns:
+        totalCompleteness_maxIntTimeCorrected (float):
+            integration time adjusted completeness
     """
     nus, planetIsVisibleBool = planetVisibilityBounds(sma,e,W,w,inc,p,Rp,starMass,plotBool, s_inner, s_outer, dmag_upper, dmag_lower=None) #Calculate planet-star nu edges and visible regions
     ts = timeFromTrueAnomaly(nus,np.tile(periods,(18,1)).T*u.year.to('day'),np.tile(e,(18,1)).T) #Calculate the planet-star intersection edges

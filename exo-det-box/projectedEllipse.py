@@ -3260,7 +3260,14 @@ def solve_dmag_Poly(dmag,e,inc,w,a,p,Rp):
 def calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2Int, indsWith4Int):
     """ This method calculates nu of a planet which have the provided dmag assuming a quasi-lambert phase function fullEqnX from AnalyticalNuFromDmag3.ipynb
     Args:
-        dmag,e,inc,w,a,p,Rp,pInds
+        dmag (ndarray):
+        e (ndarray):
+        inc (ndarray):
+        w (ndarray):
+        a (ndarray):
+        p (ndarray):
+        Rp (ndarray):
+        pInds (ndarray):
     Returns:
         nus2Int, nus4Int, dmag2Int, dmag4Int
     """
@@ -3472,7 +3479,6 @@ def calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2Int, 
         #Yes we need to do it this way
         for i in np.arange(nuRealComb.shape[0]):
             rounded = np.round(nuRealComb[i],4) #Note: the highest accuracy is +/-0.0014
-            # tmpdmags = dmagsComb[i]
             theSet = set() #Create an empty set
             for j in np.arange(len(rounded)): #Iterate through each value in the array
                 if not (rounded[j] in theSet) and not np.isnan(rounded[j]): #Check if it does not occur in the set of occurrences
@@ -3497,18 +3503,14 @@ def calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2Int, 
         gd24Int = np.tile(a[indsWith4Int].to('AU'),(8,1)).T*(1.-np.tile(e[indsWith4Int],(8,1)).T**2.)/(np.tile(e[indsWith4Int],(8,1)).T*np.cos(nuReal24Int)+1.)
         gdmags24Int = deltaMag(np.tile(p[indsWith4Int],(8,1)).T,np.tile(Rp[indsWith4Int].to('AU'),(8,1)).T,gd24Int,gPhi24Int) #calculate dmag of the specified x-value
     
-
         #HERE REPLACE THIS TMPDMAGS WITH THE NX16 ARRAY LIKE IN THE PREVIOUS. THEN DO A NU IDENTICALNESS SWEEP
         dmagsComb = np.concatenate((gdmags4Int,gdmags24Int),axis=1) #combines the two arrays
         dmagsErrorComb = np.abs(dmagsComb-dmag) #KEEP, OLD WORKS np.concatenate((np.abs(gdmags4Int-dmag),np.abs(gdmags24Int-dmag)),axis=1) #combines the two arrays
         mindmagIndsAxis2 = np.nanargmin(dmagsErrorComb,axis=1)
-        #TRY ARGSORT INSTEAD
+        #ARGSORT INSTEAD
         mindmagErrorInds = np.argsort(dmagsErrorComb,axis=1)
         sortedNuRealComb = nuRealComb[np.tile(np.arange(dmagsErrorComb.shape[0]),(mindmagErrorInds.shape[1],1)).T,mindmagErrorInds[np.arange(dmagsErrorComb.shape[0])]]
-        #DELETE sortedNuRealComb = nuRealComb[np.arange(dmagsErrorComb.shape[0])][:,mindmagErrorInds[np.arange(dmagsErrorComb.shape[0])]]
         sorteddmagsComb = dmagsComb[np.tile(np.arange(dmagsErrorComb.shape[0]),(mindmagErrorInds.shape[1],1)).T,mindmagErrorInds[np.arange(dmagsErrorComb.shape[0])]]
-        #DELETE sorteddmagsComb = dmagsComb[np.arange(dmagsErrorComb.shape[0])][:,mindmagErrorInds[np.arange(dmagsErrorComb.shape[0])]]
-        #DELETE sortedNuRealComb = nuRealComb[np.arange(dmagsErrorComb.shape[0]),mindmagErrorInds[np.arange(dmagsErrorComb.shape[0])]]
 
         nus4Int = np.asarray([sortedNuRealComb[:,0],sortedNuRealComb[:,1],sortedNuRealComb[:,2],sortedNuRealComb[:,3]]).T
         dmag4Int = np.asarray([sorteddmagsComb[:,0],sorteddmagsComb[:,1],sorteddmagsComb[:,2],sorteddmagsComb[:,3]]).T
@@ -3696,7 +3698,15 @@ def calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2Int, 
 def calc_t_sInnersOuter(sma,e,W,w,inc,s_inner,s_outer,starMass,plotBool):
     """ Collates the times where each planet crosses s_inner and s_outer
     Args:
-        sma,e,W,w,inc,s_inner,s_outer,starMass,plotBool
+        sma (ndarray):
+        e (ndarray):
+        W (ndarray):
+        w (ndarray):
+        inc (ndarray):
+        s_inner (ndarray):
+        s_outer (ndarray):
+        starMass (ndarray):
+        plotBool (bool)
     Returns:
         times (numpy array):
             the collective array of times when the planet crosses the separation circle size (n x 8)
@@ -3759,9 +3769,22 @@ def calc_t_sInnersOuter(sma,e,W,w,inc,s_inner,s_outer,starMass,plotBool):
 def planetVisibilityBounds(sma,e,W,w,inc,p,Rp,starMass,plotBool, s_inner, s_outer, dmag_upper, dmag_lower=None):
     """ Finds the nu values where the planet intersects the separations or dmags, subsequently checks whether the planet is visible in the specified time ranges
     Args:
-    sma,e,W,w,inc,p,Rp,starMass,plotBool, s_inner, s_outer, dmag_upper, dmag_lower
+        sma (ndarray):
+        e (ndarray):
+        W (ndarray):
+        w (ndarray):
+        inc (ndarray):
+        p (ndarray):
+        Rp (ndarray):
+        starMass (ndarray):
+        plotBool (ndarray):
+        s_inner (ndarray):
+        s_outer (ndarray):
+        dmag_upper (ndarray):
+        dmag_lower (ndarray):
     Returns:
-    nus, planetIsVisibleBool
+        nus (ndarray):
+        planetIsVisibleBool (ndarray)
     """
     nus = np.zeros((len(sma),18))*np.nan #4 from s_inner, 4 from s_outer, 4 from dmag_upper, 4 from dmag_lower, 2 for previous orbit intersection and next orbit intersection
     #### nu from s_inner
@@ -3829,16 +3852,10 @@ def planetVisibilityBounds(sma,e,W,w,inc,p,Rp,starMass,plotBool, s_inner, s_oute
     #Aded ranges above or below each nan (so I can simply do a midpoint evaluation with no fancy indexing)
     nus_min = np.nanmin(nus[indsNotAllNan],axis=1)
     nus_max = np.nanmax(nus[indsNotAllNan],axis=1)
-    #nus[indsNotAllNan,16] = 2.*np.pi #2.*np.pi + nus_min #append the next orbit to this bit
-    #nus[indsNotAllNan,17] = 0. #nus_max - 2.*np.pi #append the previous orbit intersection
     nus[:,16] = 2.*np.pi #2.*np.pi + nus_min #append the next orbit to this bit
     nus[:,17] = 0. #nus_max - 2.*np.pi #append the previous orbit intersection
 
     #sort the nus from smallest to largest
-    # nus[indsNotAllNan] = np.sort(nus[indsNotAllNan],axis=1)
-    # for i in np.arange(len(indsNotAllNan)):
-    #     nus[indsNotAllNan[i]] = np.sort(nus[indsNotAllNan[i]])
-    #nus = np.sort(nus,axis=1)
     for i in np.arange(nus.shape[0]):
         nus[i] = np.sort(nus[i])
 

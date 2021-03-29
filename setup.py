@@ -7,7 +7,7 @@ import re
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-with open(os.path.join("EXOSIMS","__init__.py"), "r") as f:
+with open(os.path.join("exodetbox","__init__.py"), "r") as f:
     version_file = f.read()
 
 version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",\
@@ -26,7 +26,7 @@ setuptools.setup(
     description="Methods for finding planets sharing a common (s,dmag)",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/SIOSlab/exo-det-box",
+    url="https://github.com/SIOSlab/exodetbox",
     packages=setuptools.find_packages(exclude=['tests*']),
     include_package_data=True,
     install_requires=['numpy','scipy','astropy','EXOSIMS','ortools'],
@@ -36,6 +36,5 @@ setuptools.setup(
         "Programming Language :: Python :: 3.9",
         "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
-    ],
-    ext_modules = extensions
+    ]
 )

@@ -1,5 +1,5 @@
 name = "exo-det-box"
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 # Set up a default logging handler to avoid "No handler found" warnings.
 # Other handlers can add to this one.
 import logging

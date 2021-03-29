@@ -143,7 +143,7 @@ def cij(a, e, M0, I, w, O, Rp, p, t, mu, potential_planets, d, IWA, OWA, dMag0):
     return [cij, full_visible_planets]
 
 #### Randomly Generate Orbits
-folder_load = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/Scripts'))
+folder_load = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/exo-det-box/exo-det-box/convergence_data/'))
 filename = 'HabEx_CBrownKL_PPBrownKL_compSubtype.json'
 #filename = 'HabEx_CSAG13_PPSAG13_compSubtypeHighEccen.json'
 scriptfile = os.path.join(folder_load,filename)
@@ -250,7 +250,7 @@ plt.show(block=False)
 #     pickle.dump(arrayToWrite, f) #, protocol=pickle.HIGHEST_PROTOCOL)
 
 arrayToWrite = np.asarray([ts,c2j_vals_list])
-with open('./Brown2010Lambert.pkl', 'wb') as f:
+with open('./convergence_data/Brown2010Lambert.pkl', 'wb') as f:
     pickle.dump(arrayToWrite, f) #, protocol=pickle.HIGHEST_PROTOCOL)
 
 # with open('filename.pickle', 'rb') as handle:

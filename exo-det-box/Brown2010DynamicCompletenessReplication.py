@@ -36,7 +36,7 @@ folder = './'
 PPoutpath = './'
 
 #### Randomly Generate Orbits
-folder_load = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/Scripts'))
+folder_load = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/exo-det-box/exo-det-box/convergence_data'))
 filename = 'HabEx_CBrownKL_PPBrownKL_compSubtype.json'
 #filename = 'HabEx_CSAG13_PPSAG13_compSubtypeHighEccen.json'
 scriptfile = os.path.join(folder_load,filename)
@@ -400,16 +400,16 @@ for timei in np.arange(1000):
 
 #### Load CSV Data Of Brown2010 Paper
 BrownData = list()
-with open('Brown2010DynamicCompDataPickedFromFigure1.csv') as csvfile:
+with open('./convergence_data/Brown2010DynamicCompDataPickedFromFigure1.csv') as csvfile:
     readCSV = csv.reader(csvfile, delimiter=',')
     for row in readCSV:
         BrownData.append(row)
 BrownData = np.asarray(BrownData).astype('float')
 
 #Dynamic Completeness With Corey's Method
-with open('./Brown2010Lambert.pkl', 'rb') as f:
+with open('./convergence_data/Brown2010Lambert.pkl', 'rb') as f:
     Brown2010Lambert = pickle.load(f)
-with open('./Brown2010QuasiLambert.pkl', 'rb') as f:
+with open('./convergence_data/Brown2010QuasiLambert.pkl', 'rb') as f:
     Brown2010QuasiLambert = pickle.load(f)
 
 #### Plot Revisit and Dynamic Completeness of All Planets and Earth-Like Planets

@@ -24,7 +24,7 @@ folder = './'
 PPoutpath = './'
 
 #### Randomly Generate Orbits
-folder_load = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/Scripts'))
+folder_load = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/exo-det-box/exo-det-box/convergence_data/'))
 filename = 'HabEx_CKL2_PPKL2.json'
 filename = 'WFIRSTcycle6core.json'
 filename = 'HabEx_CSAG13_PPSAG13_compSubtype.json'
@@ -83,47 +83,6 @@ totalCompleteness = np.divide(totalVisibleTimePerTarget,periods*u.year.to('day')
 ts2 = ts[:,0:8] #cutting out all the nans
 planetIsVisibleBool2 = planetIsVisibleBool[:,0:7] #cutting out all the nans
 
-def dynamicCompleteness(ts2,planetIsVisibleBool2,tobs1,tpast_startTimes,periods,ptypeBool=None):
-    """
-    Args:
-        ts2 (ndarray):
-            planet visibility window times
-        planetIsVisibleBool2 (boolean array):
-            visibility of the planet visibility windows with shape (ts2.shape[0],ts2.shape[1]-1)
-        tobs1 (ndarray):
-            time of first observation (should be randomly generated between 0 and T_k for each star)
-        tpast_startTimes (float):
-            time past first observation in days
-        periods (ndarray):
-            orbital periods of each planet in years with length ts2.shape[0]
-        ptypeBool ():
-            booleans indicating planet types. None means use all planets
-    """
-    if ptypeBool is None:
-        ptypeBool = np.ones(len(tobs1))
-    planetTypeBool = np.tile(ptypeBool,(7,1)).T
-    planetIsVisibleBool2 = np.multiply(planetIsVisibleBool2,planetTypeBool) #Here we remove the planets that are not the desired type
-
-    #Find all planets detectable at startTimes
-    startTimes = np.tile(tobs1,(7,1)).T #startTime into properly sized array
-    planetDetectedBools_times = np.multiply(ts2[:,:-1] < startTimes,np.multiply(ts2[:,1:] > startTimes,planetIsVisibleBool2)) #multiply time window bools by planetIsVisibleBool2. For revisit Completeness
-    planetDetectedBools = np.nansum(planetDetectedBools_times,axis=1)
-    planetNotDetectedBools = np.logical_not(planetDetectedBools) #for dynamic completeness
-
-    tobs2 = np.tile(np.mod(tobs1+np.tile(tpast_startTimes,(len(tobs1),1)).T,periods*u.year.to('day')),(7,1)).T
-    planetDetectedBools2_times = np.multiply(ts2[:,:-1] < tobs2,np.multiply(ts2[:,1:] > tobs2,planetIsVisibleBool2)) #is the planet visible at this time segment in time 2?
-    planetDetectedBools2 = np.nansum(planetDetectedBools2_times,axis=1)
-    planetNotDetectedBools2 = np.logical_not(planetDetectedBools2) #for dynamic completeness, the planet is not visible in this time segment at time 2
-
-    #Revisit Comp.
-    planetDetectedthenDetected = np.multiply(planetDetectedBools,planetDetectedBools2) #each planet detected at time 1 and time 2 #planets detected and still in visible region    
-    #Dynamic Comp.
-    planetNotDetectedThenDetected = np.multiply(planetNotDetectedBools,planetDetectedBools2) #each planet NOT detected at time 1 and detected at time 2 #planet not detected and now in visible region
-
-    dynComp = np.sum(planetNotDetectedThenDetected)/len(planetNotDetectedThenDetected) #divide by all planets
-    revisitComp = np.sum(planetDetectedthenDetected)/np.sum(planetDetectedBools) #divide by all planetes detected at startTimes
-
-    return dynComp, revisitComp
 
 timingStart = time.time()
 trange = np.linspace(start=0.,stop=365.*13.,num=1000)

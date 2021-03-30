@@ -3914,7 +3914,8 @@ def integrationTimeAdjustedCompletness(sma,e,W,w,inc,p,Rp,starMass,plotBool,peri
     gtIntLimit = dt > tmax #Create boolean array for inds
     totalVisibleTimePerTarget_maxIntTimeCorrected = np.nansum(np.multiply(np.multiply(dt-tmax,planetIsVisibleBool.astype('int')),gtIntLimit.astype('int')),axis=1) #We subtract the int time from the fraction of observable time
     totalCompletenessPerTarget_maxIntTimeCorrected = np.divide(totalVisibleTimePerTarget_maxIntTimeCorrected,periods*u.year.to('day')) # Fraction of time each planet is visible of its period
-    totalCompleteness_maxIntTimeCorrected = np.sum(totalCompletenessPerTarget_maxIntTimeCorrected)/len(totalCompletenessPerTarget_maxIntTimeCorrected) #Calculates the total completenss by summing all the fractions and normalize by number of targets
+    totalCompleteness_maxIntTimeCorrected = np.mean(totalCompletenessPerTarget_maxIntTimeCorrected) #Calculates the total completenss by summing all the fractions and normalize by number of targets
+
     return totalCompleteness_maxIntTimeCorrected
 
 def dynamicCompleteness(ts2,planetIsVisibleBool2,tobs1,tpast_startTimes,periods,ptypeBool=None):

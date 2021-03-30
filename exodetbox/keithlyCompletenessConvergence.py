@@ -59,7 +59,7 @@ OWA_HabEx = 6.*u.arcsec #from the HabEx Standards Team Final Report
 s_inner = 10.*u.pc.to('AU')*IWA_HabEx.to('rad').value
 s_outer = 10.*u.pc.to('AU')*OWA_HabEx.to('rad').value
 if calcCompBool == True:
-    folder = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/Scripts'))
+    folder = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/exodetbox/exodetbox/scripts'))
     filename = 'HabEx_CKL2_PPKL2.json'
     filename = 'WFIRSTcycle6core.json'
     filename = 'HabEx_CSAG13_PPSAG13_compSubtype.json'

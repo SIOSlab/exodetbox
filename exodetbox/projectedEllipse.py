@@ -1421,6 +1421,8 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
     #Double Verification
     ptptSeps = np.sqrt((twoIntSameY_x[np.arange(twoIntSameY_x.shape[0]),1] - twoIntSameY_x[np.arange(twoIntSameY_x.shape[0]),0])**2. + (twoIntSameY_y[np.arange(twoIntSameY_x.shape[0]),1] - twoIntSameY_y[np.arange(twoIntSameY_x.shape[0]),0])**2.) #Calculate the distance between the two points
     assert np.all(ptptSeps > 1e-5), 'The points selected are too close to one another' #If this is triggered, find the culprit ind, find the number of low error solutions it is producing, check and see if the errorarray has >2 low error solutions (this is likely the cause).
+    #myInd = twoIntSameYInds[np.where(ptptSeps <= 1e-5)[0]]
+    #print('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
     #Will likely need to add in a check that removes solutions by clusters. Currently we only nan indsOfMin, but we technically need to nan all indsOfMin in that set of 4 (since we did x0 y0,x0 -y0,-x0 y0,-x0 -y0)
 
 

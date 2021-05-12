@@ -1347,6 +1347,8 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
         yarrayIndsOfMin2 = yarray[indsWith5,indsOfMin2]
         ptptSeps = np.sqrt((xarrayIndsOfMin - xarrayIndsOfMin2)**2. + (yarrayIndsOfMin - yarrayIndsOfMin2)**2.) #Calculate the distance between the two points
         assert np.all(ptptSeps > 1e-5), 'The points selected are too close to one another'
+        #myInd = twoIntSameYInds[indsWith5[np.where(ptptSeps <= 1e-5)[0]]]
+        #print('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
         #If the points are all far apart, then
         twoIntSameY_x[indsWith5,1] = xarray[indsWith5,indsOfMin2]
         twoIntSameY_y[indsWith5,1] = yarray[indsWith5,indsOfMin2]
@@ -1369,6 +1371,8 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
         yarrayIndsOfMin2 = yarray[indsWith6,indsOfMin2]
         ptptSeps = np.sqrt((xarrayIndsOfMin - xarrayIndsOfMin2)**2. + (yarrayIndsOfMin - yarrayIndsOfMin2)**2.) #Calculate the distance between the two points
         assert np.all(ptptSeps > 1e-5), 'The points selected are too close to one another'
+        #myInd = twoIntSameYInds[indsWith6[np.where(ptptSeps <= 1e-5)[0]]]
+        #print('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
         #If the points are all far apart, then
         twoIntSameY_x[indsWith6,1] = xarray[indsWith6,indsOfMin2]
         twoIntSameY_y[indsWith6,1] = yarray[indsWith6,indsOfMin2]
@@ -1391,6 +1395,8 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
         yarrayIndsOfMin2 = yarray[indsWith7,indsOfMin2]
         ptptSeps = np.sqrt((xarrayIndsOfMin - xarrayIndsOfMin2)**2. + (yarrayIndsOfMin - yarrayIndsOfMin2)**2.) #Calculate the distance between the two points
         assert np.all(ptptSeps > 1e-5), 'The points selected are too close to one another'
+        #myInd = twoIntSameYInds[indsWith7[np.where(ptptSeps <= 1e-5)[0]]]
+        #print('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
         #If the points are all far apart, then
         twoIntSameY_x[indsWith7,1] = xarray[indsWith7,indsOfMin2]
         twoIntSameY_y[indsWith7,1] = yarray[indsWith7,indsOfMin2]
@@ -1413,6 +1419,8 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
         yarrayIndsOfMin2 = yarray[indsWith8,indsOfMin2]
         ptptSeps = np.sqrt((xarrayIndsOfMin - xarrayIndsOfMin2)**2. + (yarrayIndsOfMin - yarrayIndsOfMin2)**2.) #Calculate the distance between the two points
         assert np.all(ptptSeps > 1e-5), 'The points selected are too close to one another'
+        #myInd = twoIntSameYInds[indsWith8[np.where(ptptSeps <= 1e-5)[0]]]
+        #print('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
         #If the points are all far apart, then
         twoIntSameY_x[indsWith8,1] = xarray[indsWith8,indsOfMin2]
         twoIntSameY_y[indsWith8,1] = yarray[indsWith8,indsOfMin2]

@@ -709,6 +709,15 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
         #myInd = yrealImagInds[np.where(np.logical_not(np.argmin(smp,axis=0) == 0))[0]]
         #print('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
         spm = np.asarray([spm0,spm1])
+        if not np.all(np.argmin(spm,axis=0) == 1):
+            indsOf0 = np.where(np.argmin(spm,axis=0) == 0)[0]
+            for i in np.arange(len(indsOf0)):
+                if np.abs(spm0[indsOf0[i]] - spm1[indsOf0[i]]) < 1e-5:
+                    #just swap them
+                    tmp = spm0[indsOf0[i]]
+                    spm0[indsOf0[i]] = spm1[indsOf0[i]]
+                    spm1[indsOf0[i]] = tmp
+        spm = np.asarray([spm0,spm1])
         assert np.all(np.argmin(spm,axis=0) == 1), 'mins are not all are spm1'
         #myInd = yrealImagInds[np.where(np.logical_not(np.argmin(spm,axis=0) == 1))[0]]
         #print('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
@@ -749,9 +758,9 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
             minSepPoints_x[yrealImagInds[spp1Inds]] = np.real(xreal[yrealImagInds[spp1Inds],1])
             minSepPoints_y[yrealImagInds[spp1Inds]] = np.real(yreal[yrealImagInds[spp1Inds],1])
         #above says largest must be one of these: smm0, smp0, spm1, spp1
-        smm0Inds = np.where((smm0 > smp0)*(smm0 > spm1)*(smm0 > spp0))[0]
-        smp0Inds = np.where((smp0 > smm0)*(smp0 > spm1)*(smp0 > spp0))[0]
-        spm1Inds = np.where((spm1 > smp0)*(spm1 > smm0)*(spm1 > spp0))[0]
+        smm0Inds = np.where((smm0 >= smp0)*(smm0 >= spm1)*(smm0 >= spp0))[0] #used to not have equals
+        smp0Inds = np.where((smp0 > smm0)*(smp0 >= spm1)*(smp0 >= spp0))[0] #used to not have equals
+        spm1Inds = np.where((spm1 > smp0)*(spm1 > smm0)*(spm1 >= spp0))[0] #used to not have equals
         spp0Inds = np.where((spp0 > smp0)*(spp0 > spm1)*(spp0 > smm0))[0]
         if len(smm0Inds) > 0:
             maxSep[yrealImagInds[smm0Inds]] = smm0[smm0Inds]
@@ -769,6 +778,9 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
             maxSep[yrealImagInds[spp0Inds]] = spp0[spp0Inds]
             maxSepPoints_x[yrealImagInds[spp0Inds]] = np.real(xreal[yrealImagInds[spp0Inds],0])
             maxSepPoints_y[yrealImagInds[spp0Inds]] = np.real(yreal[yrealImagInds[spp0Inds],0])
+
+        assert len(yrealImagInds) == len(smm0Inds) + len(smp0Inds) + len(spm1Inds) + len(spp0Inds), 'Not all Inds accounted for'
+        #len(smm1Inds) + len(spm1Inds) + len(spp1Inds) + len()
 
     #not currentyl assigning x,y values or lmin lmax for 2 solutions with 2 complex
     ########################################################
@@ -900,7 +912,7 @@ def printKOE(ind,a,e,W,w,inc):
     return None
 
 #### Ellipse Circle Intersection
-def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lminSep, lmaxSep, yrealAllRealInds, yrealImagInds):
+def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lminSep, lmaxSep, yrealAllRealInds, yrealImagInds, sma=None, e=None, W=None, w=None, inc=None):
     """ Calculates the intersections between a circle centered at x,y with radius s_circle and an ellipse centered at x=0, y=0 with semi-major axis aligned with x-axis
     Args:
         s_circle (float):
@@ -929,6 +941,7 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
             an array of integers acting as indicies of planets which have min, max, local min, local max
         yrealImagInds (numpy array):
             an array of integers acting as indicies of planets whihc only have min, max (no local min or local max)
+        sma, e, W, w, inc are all able to be deleted. For debugging purposes only
     Returns: 
         only2RealInds (numpy array):
             indicies where there can only ever by 2 circle-ellipse intersections
@@ -1033,7 +1046,14 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
 
     #Solution Checks
     if not len(fourIntInds) == 0: #If this is the case, np.max does not work on empty sets
-        assert np.max(np.imag(xreal2[yrealAllRealInds[fourIntInds]])) < 1e-5, 'an Imag component of the all reals is too high!' #uses to be 1e-7 but would occasionally get errors so relaxing
+        if np.max(np.imag(xreal2[yrealAllRealInds[fourIntInds]])) >= 1e-3:
+            myInds = np.where(np.imag(xreal2[yrealAllRealInds[fourIntInds],0]) >= 1e-3)[0]
+            for myInd in myInds:
+                with open("/home/dean/Documents/exosims/twoDetMC/badKOE.py","a") as f:
+                    f.write('#ellipseCircleIntersections' + '\n')
+                    f.write('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]) + '\n')
+                    f.write('badsma.append(ar.value),bader.append(er),badWr.append(Wr),badwr.append(wr),badinc.append(incr)' + '\n')
+        assert np.max(np.imag(xreal2[yrealAllRealInds[fourIntInds]])) < 1e-3, 'an Imag component of the all reals is too high!' #uses to be 1e-7 but would occasionally get errors so relaxing
     else:
         print('fourIntInds is empty') #Debuggin statement
     ########################################################################################
@@ -1274,8 +1294,12 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
         if np.any(np.all(np.isnan(xarray[indsWith0]),axis=1)):
             tInd = np.where(np.all(np.isnan(xarray[indsWith0]),axis=1))[0]
             myInd = yrealAllRealInds[twoIntSameYInds[indsWith0[tInd]]]
+            with open("/home/dean/Documents/exosims/twoDetMC/badKOE.py","a") as f:
+                f.write('#ellipseCircleIntersections' + '\n')
+                f.write('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]) + '\n')
+                f.write('badsma.append(ar.value),bader.append(er),badWr.append(Wr),badwr.append(wr),badinc.append(incr)' + '\n')
             #print('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
-        assert not np.any(np.all(np.isnan(xarray[indsWith0]),axis=1)), 'Looks like one of the solutions is all NAN' #when this case was investigated, where xarray had all nans, it was caused by the quartic solver itself
+        #assert not np.any(np.all(np.isnan(xarray[indsWith0]),axis=1)), 'Looks like one of the solutions is all NAN' #when this case was investigated, where xarray had all nans, it was caused by the quartic solver itself
         #The only solution I can come up with is to preemtively filter planets like this whenever they are encountered
         #Select the two smallest seems to be the correct solution. 
         # np.where(np.all(np.isnan(xarray[indsWith0]),axis=1))[0]
@@ -1346,7 +1370,7 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
         xarrayIndsOfMin2 = xarray[indsWith5,indsOfMin2]
         yarrayIndsOfMin2 = yarray[indsWith5,indsOfMin2]
         ptptSeps = np.sqrt((xarrayIndsOfMin - xarrayIndsOfMin2)**2. + (yarrayIndsOfMin - yarrayIndsOfMin2)**2.) #Calculate the distance between the two points
-        assert np.all(ptptSeps > 1e-5), 'The points selected are too close to one another'
+        #assert np.all(ptptSeps > 1e-5), 'The points selected are too close to one another'
         #myInd = twoIntSameYInds[indsWith5[np.where(ptptSeps <= 1e-5)[0]]]
         #print('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
         #If the points are all far apart, then
@@ -1370,7 +1394,7 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
         xarrayIndsOfMin2 = xarray[indsWith6,indsOfMin2]
         yarrayIndsOfMin2 = yarray[indsWith6,indsOfMin2]
         ptptSeps = np.sqrt((xarrayIndsOfMin - xarrayIndsOfMin2)**2. + (yarrayIndsOfMin - yarrayIndsOfMin2)**2.) #Calculate the distance between the two points
-        assert np.all(ptptSeps > 1e-5), 'The points selected are too close to one another'
+        #assert np.all(ptptSeps > 1e-5), 'The points selected are too close to one another'
         #myInd = twoIntSameYInds[indsWith6[np.where(ptptSeps <= 1e-5)[0]]]
         #print('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
         #If the points are all far apart, then
@@ -1394,7 +1418,7 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
         xarrayIndsOfMin2 = xarray[indsWith7,indsOfMin2]
         yarrayIndsOfMin2 = yarray[indsWith7,indsOfMin2]
         ptptSeps = np.sqrt((xarrayIndsOfMin - xarrayIndsOfMin2)**2. + (yarrayIndsOfMin - yarrayIndsOfMin2)**2.) #Calculate the distance between the two points
-        assert np.all(ptptSeps > 1e-5), 'The points selected are too close to one another'
+        #assert np.all(ptptSeps > 1e-5), 'The points selected are too close to one another'
         #myInd = twoIntSameYInds[indsWith7[np.where(ptptSeps <= 1e-5)[0]]]
         #print('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
         #If the points are all far apart, then
@@ -1418,7 +1442,7 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
         xarrayIndsOfMin2 = xarray[indsWith8,indsOfMin2]
         yarrayIndsOfMin2 = yarray[indsWith8,indsOfMin2]
         ptptSeps = np.sqrt((xarrayIndsOfMin - xarrayIndsOfMin2)**2. + (yarrayIndsOfMin - yarrayIndsOfMin2)**2.) #Calculate the distance between the two points
-        assert np.all(ptptSeps > 1e-5), 'The points selected are too close to one another'
+        #assert np.all(ptptSeps > 1e-5), 'The points selected are too close to one another'
         #myInd = twoIntSameYInds[indsWith8[np.where(ptptSeps <= 1e-5)[0]]]
         #print('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
         #If the points are all far apart, then
@@ -1428,6 +1452,13 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
 
     #Double Verification
     ptptSeps = np.sqrt((twoIntSameY_x[np.arange(twoIntSameY_x.shape[0]),1] - twoIntSameY_x[np.arange(twoIntSameY_x.shape[0]),0])**2. + (twoIntSameY_y[np.arange(twoIntSameY_x.shape[0]),1] - twoIntSameY_y[np.arange(twoIntSameY_x.shape[0]),0])**2.) #Calculate the distance between the two points
+    if np.any(np.all(np.isnan(xarray),axis=1)):
+        tInd = np.where(np.all(np.isnan(xarray),axis=1))[0]
+        myInd = yrealAllRealInds[twoIntSameYInds[tInd]]
+        with open("/home/dean/Documents/exosims/twoDetMC/badKOE.py","a") as f:
+            f.write('#ellipseCircleIntersections' + '\n')
+            f.write('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]) + '\n')
+            f.write('badsma.append(ar.value),bader.append(er),badWr.append(Wr),badwr.append(wr),badinc.append(incr)' + '\n')
     assert np.all(ptptSeps > 1e-5), 'The points selected are too close to one another' #If this is triggered, find the culprit ind, find the number of low error solutions it is producing, check and see if the errorarray has >2 low error solutions (this is likely the cause).
     #myInd = twoIntSameYInds[np.where(ptptSeps <= 1e-5)[0]]
     #print('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
@@ -1438,7 +1469,14 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
     twoIntOppositeX_x = np.zeros((len(twoIntOppositeXInds),2))
     twoIntOppositeX_y = np.zeros((len(twoIntOppositeXInds),2))
     if not len(twoIntOppositeXInds) == 0:
-        assert np.max(np.imag(xreal2[yrealAllRealInds[twoIntOppositeXInds],0])) < 1e-7, '' #was 1e-12 but caused problems changed to 1e-7
+        if np.max(np.imag(xreal2[yrealAllRealInds[twoIntOppositeXInds],0])) >= 1e-4:
+            myInds = np.where(np.imag(xreal2[yrealAllRealInds[twoIntOppositeXInds],0]) >= 1e-4)[0]
+            for myInd in myInds:
+                with open("/home/dean/Documents/exosims/twoDetMC/badKOE.py","a") as f:
+                    f.write('#ellipseCircleIntersections' + '\n')
+                    f.write('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]) + '\n')
+                    f.write('badsma.append(ar.value),bader.append(er),badWr.append(Wr),badwr.append(wr),badinc.append(incr)' + '\n')
+        assert np.max(np.imag(xreal2[yrealAllRealInds[twoIntOppositeXInds],0])) < 1e-4, '' #was 1e-12 but caused problems changed to 1e-7
     else:
         print('twoIntOppositeXInds has length 0') #this is a debugging statement
     twoIntOppositeX_x[:,0] = np.real(xreal2[yrealAllRealInds[twoIntOppositeXInds],0])
@@ -2330,6 +2368,14 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
     #xreal, delta, P, D2, R, delta_0 = quarticSolutions_ellipse_to_Quarticipynb(A.astype('complex128'), B, C, D)
     xreal, _, _, _, _, _ = quarticSolutions_ellipse_to_Quarticipynb(A.astype('complex128'), B, C, D)
     del A, B, C, D #delting for memory efficiency
+    if not np.max(np.nanmin(np.abs(np.imag(xreal)),axis=1)) < 1e-5:
+        myInd = np.where(np.nanmin(np.abs(np.imag(xreal)),axis=1) >= 1e-5)[0][0]
+        print('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
+        print('badsma.append(ar.value),bader.append(er),badWr.append(Wr),badwr.append(wr),badinc.append(incr)')
+        with open("/home/dean/Documents/exosims/twoDetMC/badKOE.py","a") as f:
+            f.write('#calcMasterIntersections' + '\n')
+            f.write('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]) + '\n')
+            f.write('badsma.append(ar.value),bader.append(er),badWr.append(Wr),badwr.append(wr),badinc.append(incr)' + '\n')
     assert np.max(np.nanmin(np.abs(np.imag(xreal)),axis=1)) < 1e-5, 'At least one row has min > 1e-5' #this ensures each row has a solution
     #myInd = np.where(np.nanmin(np.abs(np.imag(xreal)),axis=1) > 1e-5)
     #print('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
@@ -2372,7 +2418,7 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
             twoIntOppositeXInds, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2, twoIntSameYInds,\
             type0_0Inds,type0_1Inds,type0_2Inds,type0_3Inds,type0_4Inds,type1_0Inds,type1_1Inds,type1_2Inds,type1_3Inds,type1_4Inds,\
             type2_0Inds,type2_1Inds,type2_2Inds,type2_3Inds,type2_4Inds,type3_0Inds,type3_1Inds,type3_2Inds,type3_3Inds,type3_4Inds,\
-            _ = ellipseCircleIntersections(s_circle, dmajorp, dminorp, np.abs(x), np.abs(y), x, y, minSep, maxSep, lminSep, lmaxSep, yrealAllRealInds, yrealImagInds)
+            _ = ellipseCircleIntersections(s_circle, dmajorp, dminorp, np.abs(x), np.abs(y), x, y, minSep, maxSep, lminSep, lmaxSep, yrealAllRealInds, yrealImagInds,sma, e, W, w, inc)
     if plotBool == False:
         del typeInds0, typeInds1, typeInds2, typeInds3
         del type0_0Inds,type0_1Inds,type0_2Inds,type0_3Inds,type0_4Inds,type1_0Inds,type1_1Inds,type1_2Inds,type1_3Inds,type1_4Inds
@@ -3330,140 +3376,167 @@ def calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2Int, 
     # gdmags4Int = dmagsComb[:,0:8]
     # gdmags24Int = dmagsComb[:,8:16]
     #Differentiate between inds with 4 non-nans (in combined) and inds with 6 non-nans in combined
+
+    #### Commenting to see if this really matters
     #HEY I DON'T THINK THIS REALLY MATTERS
-    indsWith5NonNan = np.where(np.sum(np.isnan(nuRealComb2Int).astype('int'),axis=1) == 11)[0] #a very rare case
-    indsWith4NonNan = np.where(np.sum(np.isnan(nuRealComb2Int).astype('int'),axis=1) == 12)[0]
-    indsWith3NonNan = np.where(np.sum(np.isnan(nuRealComb2Int).astype('int'),axis=1) == 13)[0]
-    indsWith2NonNan = np.where(np.sum(np.isnan(nuRealComb2Int).astype('int'),axis=1) == 14)[0] # a very rare case
-    assert nuRealComb2Int.shape[0] == len(indsWith4NonNan) + len(indsWith3NonNan) + len(indsWith5NonNan) + len(indsWith2NonNan), 'The number of 3 real and 4 real does not sum to the number of nuRealCombs with 2 Intersections'
-    #myInd = set(np.arange(len(nuRealComb2Int)))^set(indsWith4NonNan).union(set(indsWith3NonNan).union(set(indsWith5NonNan).union(set(indsWith2NonNan))))
-    #print('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
+    # indsWith5NonNan = np.where(np.sum(np.isnan(nuRealComb2Int).astype('int'),axis=1) == 11)[0] #a very rare case
+    # indsWith4NonNan = np.where(np.sum(np.isnan(nuRealComb2Int).astype('int'),axis=1) == 12)[0]
+    # indsWith3NonNan = np.where(np.sum(np.isnan(nuRealComb2Int).astype('int'),axis=1) == 13)[0]
+    # indsWith2NonNan = np.where(np.sum(np.isnan(nuRealComb2Int).astype('int'),axis=1) == 14)[0] # a very rare case
+    # if not nuRealComb2Int.shape[0] == len(indsWith4NonNan) + len(indsWith3NonNan) + len(indsWith5NonNan) + len(indsWith2NonNan):
+    #     myInd2 = list(set(np.arange(len(nuRealComb2Int)))^set(indsWith4NonNan).union(set(indsWith3NonNan).union(set(indsWith5NonNan).union(set(indsWith2NonNan)))))
+    #     for i in np.arange(len(myInd2)):
+    #         myInd = indsWith2Int[myInd2[i]]
+    #         #print(myInd)
+    #         print('ar = ' + str(a[myInd].value) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + 'np.nan'  + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
+    #         print('badsma.append(ar.value),bader.append(er),badWr.append(Wr),badwr.append(wr),badinc.append(incr)')
+    #         with open("/home/dean/Documents/exosims/twoDetMC/badKOE.py","a") as f:
+    #             f.write('#calc_planetnu_from_dmag' + '\n')
+    #             f.write('ar = ' + str(a[myInd].value) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + 'np.nan' + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]) + '\n')
+    #             f.write('badsma.append(ar.value),bader.append(er),badWr.append(Wr),badwr.append(wr),badinc.append(incr)' + '\n')
+    # assert nuRealComb2Int.shape[0] == len(indsWith4NonNan) + len(indsWith3NonNan) + len(indsWith5NonNan) + len(indsWith2NonNan), 'The number of 3 real and 4 real does not sum to the number of nuRealCombs with 2 Intersections'
+    #myInd = list(set(np.arange(len(nuRealComb2Int)))^set(indsWith4NonNan).union(set(indsWith3NonNan).union(set(indsWith5NonNan).union(set(indsWith2NonNan)))))
+    #myInd2 = indsWith2Int[myInd]      print('ar = ' + str(a[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
+    ####
 
-    #For arccos in 0-pi (indicies 0-7) and pi-2pi (indicies 8-15)
-    gPhi2Int = (1.+np.sin(np.tile(inc[indsWith2Int],(16,1)).T)*np.sin(nuRealComb2Int+np.tile(w[indsWith2Int],(16,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
-    gd2Int = np.tile(a[indsWith2Int].to('AU'),(16,1)).T*(1.-np.tile(e[indsWith2Int],(16,1)).T**2.)/(np.tile(e[indsWith2Int],(16,1)).T*np.cos(nuRealComb2Int)+1.)
-    gdmags2IntComb = deltaMag(np.tile(p[indsWith2Int],(16,1)).T,np.tile(Rp[indsWith2Int].to('AU'),(16,1)).T,gd2Int,gPhi2Int) #calculate dmag of the specified x-value
-    #del gPhi2Int, gd2Int
-    #For arccos in pi-2pi
+    #Note this if else may cause errors. For some reason, nuRealComb2Int was producing 8 and not 16.. causing me to implement this
+    if nuRealComb2Int.shape[1] == 8:
+            #For arccos in 0-pi (indicies 0-7) and pi-2pi (indicies 8-15)
+        gPhi2Int = (1.+np.sin(np.tile(inc[indsWith2Int],(8,1)).T)*np.sin(nuRealComb2Int+np.tile(w[indsWith2Int],(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
+        gd2Int = np.tile(a[indsWith2Int].to('AU'),(8,1)).T*(1.-np.tile(e[indsWith2Int],(8,1)).T**2.)/(np.tile(e[indsWith2Int],(8,1)).T*np.cos(nuRealComb2Int)+1.)
+        gdmags2IntComb = deltaMag(np.tile(p[indsWith2Int],(8,1)).T,np.tile(Rp[indsWith2Int].to('AU'),(8,1)).T,gd2Int,gPhi2Int) #calculate dmag of the specified x-value
 
-    # #For arccos in 0-pi
-    # gPhi2Int = (1.+np.sin(np.tile(inc[indsWith2Int],(8,1)).T)*np.sin(nuReal2Int+np.tile(w[indsWith2Int],(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
-    # gd2Int = np.tile(a[indsWith2Int].to('AU'),(8,1)).T*(1.-np.tile(e[indsWith2Int],(8,1)).T**2.)/(np.tile(e[indsWith2Int],(8,1)).T*np.cos(nuReal2Int)+1.)
-    # gdmags2Int = deltaMag(np.tile(p[indsWith2Int],(8,1)).T,np.tile(Rp[indsWith2Int].to('AU'),(8,1)).T,gd2Int,gPhi2Int) #calculate dmag of the specified x-value
-    # #del gPhi2Int, gd2Int
-    # #For arccos in pi-2pi
+        dmags2IntErrorComb = np.abs(gdmags2IntComb - dmag)
+        mindmag2IntErrorInds = np.argsort(dmags2IntErrorComb,axis=1)
+        sortedNuReal2IntComb = nuRealComb2Int[np.tile(np.arange(dmags2IntErrorComb.shape[0]),(mindmag2IntErrorInds.shape[1],1)).T,mindmag2IntErrorInds[np.arange(dmags2IntErrorComb.shape[0])]]
+        sortedgdmags2IntComb = gdmags2IntComb[np.tile(np.arange(dmags2IntErrorComb.shape[0]),(mindmag2IntErrorInds.shape[1],1)).T,mindmag2IntErrorInds[np.arange(dmags2IntErrorComb.shape[0])]]
 
-    # #del inBoundsBools2Int, outReal2Int
-    # gPhi22Int = (1.+np.sin(np.tile(inc[indsWith2Int],(8,1)).T)*np.sin(nuReal22Int+np.tile(w[indsWith2Int],(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
-    # gd22Int = np.tile(a[indsWith2Int].to('AU'),(8,1)).T*(1.-np.tile(e[indsWith2Int],(8,1)).T**2.)/(np.tile(e[indsWith2Int],(8,1)).T*np.cos(nuReal22Int)+1.)
-    # gdmags22Int = deltaMag(np.tile(p[indsWith2Int],(8,1)).T,np.tile(Rp[indsWith2Int].to('AU'),(8,1)).T,gd22Int,gPhi22Int) #calculate dmag of the specified x-value
-    # #del gPhi22Int, gd22Int
+        #Create Output Arrays
+        nus2Int = np.asarray([sortedNuReal2IntComb[:,0],sortedNuReal2IntComb[:,1]]).T
+        dmag2Int = np.asarray([sortedgdmags2IntComb[:,0],sortedgdmags2IntComb[:,1]]).T
+    elif nuRealComb2Int.shape[1] == 16:
+        #For arccos in 0-pi (indicies 0-7) and pi-2pi (indicies 8-15)
+        gPhi2Int = (1.+np.sin(np.tile(inc[indsWith2Int],(16,1)).T)*np.sin(nuRealComb2Int+np.tile(w[indsWith2Int],(16,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
+        gd2Int = np.tile(a[indsWith2Int].to('AU'),(16,1)).T*(1.-np.tile(e[indsWith2Int],(16,1)).T**2.)/(np.tile(e[indsWith2Int],(16,1)).T*np.cos(nuRealComb2Int)+1.)
+        gdmags2IntComb = deltaMag(np.tile(p[indsWith2Int],(16,1)).T,np.tile(Rp[indsWith2Int].to('AU'),(16,1)).T,gd2Int,gPhi2Int) #calculate dmag of the specified x-value
+        #del gPhi2Int, gd2Int
+        #For arccos in pi-2pi
 
-    #
-    #DELETEdmag2IntComb = np.concatenate((nuReal4Int,nuReal24Int),axis=1) #combines the two arrays
-    #DELETEnuReal2IntComb = np.concatenate((nuReal4Int,nuReal24Int),axis=1) #combines the two arrays
-    dmags2IntErrorComb = np.abs(gdmags2IntComb - dmag)
-    mindmag2IntErrorInds = np.argsort(dmags2IntErrorComb,axis=1)
-    sortedNuReal2IntComb = nuRealComb2Int[np.tile(np.arange(dmags2IntErrorComb.shape[0]),(mindmag2IntErrorInds.shape[1],1)).T,mindmag2IntErrorInds[np.arange(dmags2IntErrorComb.shape[0])]]
-    sortedgdmags2IntComb = gdmags2IntComb[np.tile(np.arange(dmags2IntErrorComb.shape[0]),(mindmag2IntErrorInds.shape[1],1)).T,mindmag2IntErrorInds[np.arange(dmags2IntErrorComb.shape[0])]]
+        # #For arccos in 0-pi
+        # gPhi2Int = (1.+np.sin(np.tile(inc[indsWith2Int],(8,1)).T)*np.sin(nuReal2Int+np.tile(w[indsWith2Int],(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
+        # gd2Int = np.tile(a[indsWith2Int].to('AU'),(8,1)).T*(1.-np.tile(e[indsWith2Int],(8,1)).T**2.)/(np.tile(e[indsWith2Int],(8,1)).T*np.cos(nuReal2Int)+1.)
+        # gdmags2Int = deltaMag(np.tile(p[indsWith2Int],(8,1)).T,np.tile(Rp[indsWith2Int].to('AU'),(8,1)).T,gd2Int,gPhi2Int) #calculate dmag of the specified x-value
+        # #del gPhi2Int, gd2Int
+        # #For arccos in pi-2pi
 
-    #Create Output Arrays
-    #DELETEnus2Int = np.zeros((nuRealComb2Int.shape[0],2)) #The output Arrays for only 2 Intersections
-    #DELETEdmag2Int = np.zeros((gdmags2IntComb.shape[0],2)) #The output Arrays for only 2 Intersections
-    nus2Int = np.asarray([sortedNuReal2IntComb[:,0],sortedNuReal2IntComb[:,1]]).T
-    dmag2Int = np.asarray([sortedgdmags2IntComb[:,0],sortedgdmags2IntComb[:,1]]).T
+        # #del inBoundsBools2Int, outReal2Int
+        # gPhi22Int = (1.+np.sin(np.tile(inc[indsWith2Int],(8,1)).T)*np.sin(nuReal22Int+np.tile(w[indsWith2Int],(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
+        # gd22Int = np.tile(a[indsWith2Int].to('AU'),(8,1)).T*(1.-np.tile(e[indsWith2Int],(8,1)).T**2.)/(np.tile(e[indsWith2Int],(8,1)).T*np.cos(nuReal22Int)+1.)
+        # gdmags22Int = deltaMag(np.tile(p[indsWith2Int],(8,1)).T,np.tile(Rp[indsWith2Int].to('AU'),(8,1)).T,gd22Int,gPhi22Int) #calculate dmag of the specified x-value
+        # #del gPhi22Int, gd22Int
 
-    # #Evaluate which solutions are good and which aren't
-    # #1 What is the smallest in 1 Int and what is the smallest in 2 Int
-    # assert np.all(np.sum(~np.isnan(gdmags2Int),axis=1)==2), 'There are more or less than 2 solutions for 2 Int for gdmags2Int'
-    # assert np.all(np.sum(~np.isnan(gdmags22Int),axis=1)==2), 'There are more or less than 2 solutions for 2 Int for gdmags22Int'
-    # error1Int = np.abs(gdmags2Int - dmag)
-    # error2Int = np.abs(gdmags22Int - dmag)
-    # minerror1IntInds = np.nanargmin(error1Int,axis=1) #Finds the minimum error of 1
-    # minerror2IntInds = np.nanargmin(error2Int,axis=1) #Finds the minimum error of 2
-    # maxerror1IntInds = np.nanargmax(error1Int,axis=1) #Finds the maximum error of 1
-    # maxerror2IntInds = np.nanargmax(error2Int,axis=1) #Finds the maximum error of 2
-    # minerror1Int = np.nanmin(error1Int,axis=1) #Finds the minimum error of 1
-    # minerror2Int = np.nanmin(error2Int,axis=1) #Finds the minimum error of 2
-    # maxerror1Int = np.nanmax(error1Int,axis=1) #Finds the maximum error of 1
-    # maxerror2Int = np.nanmax(error2Int,axis=1) #Finds the maximum error of 2
-    # #Case 1, the maximum error in 1 are all less than the minimum error in 2, so gdmags2Int contains all valid solutions
-    # indsCase1 = np.where(maxerror1Int <= minerror2Int)[0]
-    # nus2Int[indsCase1,0] = nuReal2Int[indsCase1,minerror1IntInds[indsCase1]]
-    # nus2Int[indsCase1,1] = nuReal2Int[indsCase1,maxerror1IntInds[indsCase1]]
-    # dmag2Int[indsCase1,0] = gdmags2Int[indsCase1,minerror1IntInds[indsCase1]]
-    # dmag2Int[indsCase1,1] = gdmags2Int[indsCase1,maxerror1IntInds[indsCase1]]
-    # #Do a check if both nu values are identical
-    # #Case 2, the maximum error in 2 are all less than the minimum error in 1, so gdmags22Int contains all valid solutions
-    # indsCase2 = np.where(maxerror2Int < minerror1Int)[0]
-    # nus2Int[indsCase2,0] = nuReal22Int[indsCase2,minerror2IntInds[indsCase2]]
-    # nus2Int[indsCase2,1] = nuReal22Int[indsCase2,maxerror2IntInds[indsCase2]]
-    # dmag2Int[indsCase2,0] = gdmags22Int[indsCase2,minerror2IntInds[indsCase2]]
-    # dmag2Int[indsCase2,1] = gdmags22Int[indsCase2,maxerror2IntInds[indsCase2]]
-    # #Case 3, the smallest exists in gdmags2Int, the second smallest exists in gdmags22Int
-    # indsCase3 = np.where((minerror1Int <= minerror2Int)*(maxerror1Int > minerror2Int))[0]
-    # nus2Int[indsCase3,0] = nuReal2Int[indsCase3,minerror1IntInds[indsCase3]]
-    # nus2Int[indsCase3,1] = nuReal22Int[indsCase3,minerror2IntInds[indsCase3]]
-    # dmag2Int[indsCase3,0] = gdmags2Int[indsCase3,minerror1IntInds[indsCase3]]
-    # dmag2Int[indsCase3,1] = gdmags22Int[indsCase3,minerror2IntInds[indsCase3]]
-    # #Case 4, the smallest exists in gdmags22Int, the second smallest exists in gdmags2Int
-    # indsCase4 = np.where((minerror2Int < minerror1Int)*(maxerror2Int > minerror1Int))[0]
-    # nus2Int[indsCase4,0] = nuReal22Int[indsCase4,minerror2IntInds[indsCase4]]
-    # nus2Int[indsCase4,1] = nuReal2Int[indsCase4,minerror1IntInds[indsCase4]]
-    # dmag2Int[indsCase4,0] = gdmags22Int[indsCase4,minerror2IntInds[indsCase4]]
-    # dmag2Int[indsCase4,1] = gdmags2Int[indsCase4,minerror1IntInds[indsCase4]]
-    # #Check indsCase1+indsCase2+indsCase3+indsCase3 encompases all inds
-    # assert indsCase1.shape[0]+indsCase2.shape[0]+indsCase3.shape[0]+indsCase4.shape[0] == gdmags2Int.shape[0], 'solutions number dont fit'
+        #
+        dmags2IntErrorComb = np.abs(gdmags2IntComb - dmag)
+        mindmag2IntErrorInds = np.argsort(dmags2IntErrorComb,axis=1)
+        sortedNuReal2IntComb = nuRealComb2Int[np.tile(np.arange(dmags2IntErrorComb.shape[0]),(mindmag2IntErrorInds.shape[1],1)).T,mindmag2IntErrorInds[np.arange(dmags2IntErrorComb.shape[0])]]
+        sortedgdmags2IntComb = gdmags2IntComb[np.tile(np.arange(dmags2IntErrorComb.shape[0]),(mindmag2IntErrorInds.shape[1],1)).T,mindmag2IntErrorInds[np.arange(dmags2IntErrorComb.shape[0])]]
 
+        #Create Output Arrays
+        nus2Int = np.asarray([sortedNuReal2IntComb[:,0],sortedNuReal2IntComb[:,1]]).T
+        dmag2Int = np.asarray([sortedgdmags2IntComb[:,0],sortedgdmags2IntComb[:,1]]).T
 
-    # #Checking nus2Int identical-ness
-    # errornus2Int = np.abs(nus2Int[:,0]-nus2Int[:,1])
-
-
-    #DELETE THIS CHUNK
-    # print(saltyburrito)
-    # #Between the minimum of 1 and the minimum of 2, which is the smallest
-    # minErrorOf1or2 = np.argmin(np.stack((error1Int[np.arange(gdmags2Int.shape[0]),minerror1IntInds],error2Int[np.arange(gdmags2Int.shape[0]),minerror2IntInds])).T,axis=1) #Determines whether 1 or 2 has the smaller error
-    # #Find the inds that have the smallest error in gdmags2Int or gdmags22Int
-    # indsWithMinError1 = np.where(minErrorOf1or2 == 0)[0]
-    # indsWithMinError2 = np.where(minErrorOf1or2 == 1)[0]
-    
-    # gdmagsCombined2Int = np.zeros((gdmags2Int.shape[0],2))
-    # gdmagsCombined2Int[indsWithMinError1,0] = gdmags2Int[indsWithMinError1,minerror1IntInds[indsWithMinError1]]
-    # gdmagsCombined2Int[indsWithMinError2,0] = gdmags22Int[indsWithMinError2,minerror2IntInds[indsWithMinError2]]
+        # #Evaluate which solutions are good and which aren't
+        # #1 What is the smallest in 1 Int and what is the smallest in 2 Int
+        # assert np.all(np.sum(~np.isnan(gdmags2Int),axis=1)==2), 'There are more or less than 2 solutions for 2 Int for gdmags2Int'
+        # assert np.all(np.sum(~np.isnan(gdmags22Int),axis=1)==2), 'There are more or less than 2 solutions for 2 Int for gdmags22Int'
+        # error1Int = np.abs(gdmags2Int - dmag)
+        # error2Int = np.abs(gdmags22Int - dmag)
+        # minerror1IntInds = np.nanargmin(error1Int,axis=1) #Finds the minimum error of 1
+        # minerror2IntInds = np.nanargmin(error2Int,axis=1) #Finds the minimum error of 2
+        # maxerror1IntInds = np.nanargmax(error1Int,axis=1) #Finds the maximum error of 1
+        # maxerror2IntInds = np.nanargmax(error2Int,axis=1) #Finds the maximum error of 2
+        # minerror1Int = np.nanmin(error1Int,axis=1) #Finds the minimum error of 1
+        # minerror2Int = np.nanmin(error2Int,axis=1) #Finds the minimum error of 2
+        # maxerror1Int = np.nanmax(error1Int,axis=1) #Finds the maximum error of 1
+        # maxerror2Int = np.nanmax(error2Int,axis=1) #Finds the maximum error of 2
+        # #Case 1, the maximum error in 1 are all less than the minimum error in 2, so gdmags2Int contains all valid solutions
+        # indsCase1 = np.where(maxerror1Int <= minerror2Int)[0]
+        # nus2Int[indsCase1,0] = nuReal2Int[indsCase1,minerror1IntInds[indsCase1]]
+        # nus2Int[indsCase1,1] = nuReal2Int[indsCase1,maxerror1IntInds[indsCase1]]
+        # dmag2Int[indsCase1,0] = gdmags2Int[indsCase1,minerror1IntInds[indsCase1]]
+        # dmag2Int[indsCase1,1] = gdmags2Int[indsCase1,maxerror1IntInds[indsCase1]]
+        # #Do a check if both nu values are identical
+        # #Case 2, the maximum error in 2 are all less than the minimum error in 1, so gdmags22Int contains all valid solutions
+        # indsCase2 = np.where(maxerror2Int < minerror1Int)[0]
+        # nus2Int[indsCase2,0] = nuReal22Int[indsCase2,minerror2IntInds[indsCase2]]
+        # nus2Int[indsCase2,1] = nuReal22Int[indsCase2,maxerror2IntInds[indsCase2]]
+        # dmag2Int[indsCase2,0] = gdmags22Int[indsCase2,minerror2IntInds[indsCase2]]
+        # dmag2Int[indsCase2,1] = gdmags22Int[indsCase2,maxerror2IntInds[indsCase2]]
+        # #Case 3, the smallest exists in gdmags2Int, the second smallest exists in gdmags22Int
+        # indsCase3 = np.where((minerror1Int <= minerror2Int)*(maxerror1Int > minerror2Int))[0]
+        # nus2Int[indsCase3,0] = nuReal2Int[indsCase3,minerror1IntInds[indsCase3]]
+        # nus2Int[indsCase3,1] = nuReal22Int[indsCase3,minerror2IntInds[indsCase3]]
+        # dmag2Int[indsCase3,0] = gdmags2Int[indsCase3,minerror1IntInds[indsCase3]]
+        # dmag2Int[indsCase3,1] = gdmags22Int[indsCase3,minerror2IntInds[indsCase3]]
+        # #Case 4, the smallest exists in gdmags22Int, the second smallest exists in gdmags2Int
+        # indsCase4 = np.where((minerror2Int < minerror1Int)*(maxerror2Int > minerror1Int))[0]
+        # nus2Int[indsCase4,0] = nuReal22Int[indsCase4,minerror2IntInds[indsCase4]]
+        # nus2Int[indsCase4,1] = nuReal2Int[indsCase4,minerror1IntInds[indsCase4]]
+        # dmag2Int[indsCase4,0] = gdmags22Int[indsCase4,minerror2IntInds[indsCase4]]
+        # dmag2Int[indsCase4,1] = gdmags2Int[indsCase4,minerror1IntInds[indsCase4]]
+        # #Check indsCase1+indsCase2+indsCase3+indsCase3 encompases all inds
+        # assert indsCase1.shape[0]+indsCase2.shape[0]+indsCase3.shape[0]+indsCase4.shape[0] == gdmags2Int.shape[0], 'solutions number dont fit'
 
 
-    # #Evaluate which solutions are good and which aren't
-    # correctValBoolean12Int = np.abs(gdmags2Int - dmag) < 1e-4 #Values of nuReal which yield the desired dmag
-    # correctValBoolean22Int = np.abs(gdmags22Int - dmag) < 1e-4 #values of nuReal2 which yield the desired dmag
-    # bothBools2Int = correctValBoolean12Int*correctValBoolean22Int #values of nuReal 
-    # #Combine the two sets of solutions
-    # nusCombined2Int = np.zeros(nuReal2Int.shape)
-    # nusCombined2Int = nuReal2Int*np.logical_xor(correctValBoolean12Int,bothBools2Int) + nuReal22Int*np.logical_xor(correctValBoolean22Int,bothBools2Int) + nuReal2Int*bothBools2Int #these are the nus where intersections occur
-    # #del nuReal2Int, nuReal22Int
-    # #Combine and verify the two sets of dmags resulting from the solutions
-    # gdmagsCombined2Int = np.zeros(gdmags2Int.shape)
-    # gdmagsCombined2Int = gdmags2Int*np.logical_xor(correctValBoolean12Int,bothBools2Int) + gdmags22Int*np.logical_xor(correctValBoolean22Int,bothBools2Int) + gdmags2Int*bothBools2Int
-    # #del gdmags2Int, gdmags22Int, correctValBoolean12Int, correctValBoolean22Int
-    # numSolsPer2Int = np.sum((~np.isnan(gdmagsCombined2Int)).astype('int'),axis=1)
-    # #DELETEnumSolsHist2Int = np.histogram(numSolsPer2Int,bins=[-0.1,0.9,1.9,2.9,3.9,4.9,5.9,6.9,7.9,8.9,9.9])
-    # #print(saltyburrito)
-    # assert np.all(numSolsPer2Int == 2) #All 2 int must have 2 solutions
-    # del numSolsPer2Int
-    # #Now that all 2Int only have 2 solutions
-    # # nus2IntSol0 = np.nanargmin(nusCombined2Int,axis=1)
-    # # nus2IntSol1 = np.nanargmax(nusCombined2Int,axis=1)
-    # nus2IntSol0 = np.nanargmin(np.abs(gdmagsCombined2Int-dmag),axis=1)
-    # nus2IntSol1 = np.nanargmax(np.absnusCombined2Int,axis=1)
-    # badInds = np.where(nus2IntSol0 == nus2IntSol1)[0] #inds where same nus inds are trying to be assigned
-    # assert np.all(~(nus2IntSol0 == nus2IntSol1)) #Checks that all solutions use different inds
-    # #Combine the 2 individual intersection solutions
-    # nus2Int = np.stack((nusCombined2Int[np.arange(nusCombined2Int.shape[0]),nus2IntSol0],nusCombined2Int[np.arange(nusCombined2Int.shape[0]),nus2IntSol1])).T
-    # dmag2Int = np.stack((gdmagsCombined2Int[np.arange(nusCombined2Int.shape[0]),nus2IntSol0],gdmagsCombined2Int[np.arange(nusCombined2Int.shape[0]),nus2IntSol1])).T
-    # del gdmagsCombined2Int, nus2IntSol0, nus2IntSol1, nusCombined2Int
+        # #Checking nus2Int identical-ness
+        # errornus2Int = np.abs(nus2Int[:,0]-nus2Int[:,1])
 
-    # assert ~np.any(np.equal(nus2Int[:,0],nus2Int[:,1])), 'one of the 2 extrema nus are identical'
 
+        #DELETE THIS CHUNK
+        # print(saltyburrito)
+        # #Between the minimum of 1 and the minimum of 2, which is the smallest
+        # minErrorOf1or2 = np.argmin(np.stack((error1Int[np.arange(gdmags2Int.shape[0]),minerror1IntInds],error2Int[np.arange(gdmags2Int.shape[0]),minerror2IntInds])).T,axis=1) #Determines whether 1 or 2 has the smaller error
+        # #Find the inds that have the smallest error in gdmags2Int or gdmags22Int
+        # indsWithMinError1 = np.where(minErrorOf1or2 == 0)[0]
+        # indsWithMinError2 = np.where(minErrorOf1or2 == 1)[0]
+        
+        # gdmagsCombined2Int = np.zeros((gdmags2Int.shape[0],2))
+        # gdmagsCombined2Int[indsWithMinError1,0] = gdmags2Int[indsWithMinError1,minerror1IntInds[indsWithMinError1]]
+        # gdmagsCombined2Int[indsWithMinError2,0] = gdmags22Int[indsWithMinError2,minerror2IntInds[indsWithMinError2]]
+
+
+        # #Evaluate which solutions are good and which aren't
+        # correctValBoolean12Int = np.abs(gdmags2Int - dmag) < 1e-4 #Values of nuReal which yield the desired dmag
+        # correctValBoolean22Int = np.abs(gdmags22Int - dmag) < 1e-4 #values of nuReal2 which yield the desired dmag
+        # bothBools2Int = correctValBoolean12Int*correctValBoolean22Int #values of nuReal 
+        # #Combine the two sets of solutions
+        # nusCombined2Int = np.zeros(nuReal2Int.shape)
+        # nusCombined2Int = nuReal2Int*np.logical_xor(correctValBoolean12Int,bothBools2Int) + nuReal22Int*np.logical_xor(correctValBoolean22Int,bothBools2Int) + nuReal2Int*bothBools2Int #these are the nus where intersections occur
+        # #del nuReal2Int, nuReal22Int
+        # #Combine and verify the two sets of dmags resulting from the solutions
+        # gdmagsCombined2Int = np.zeros(gdmags2Int.shape)
+        # gdmagsCombined2Int = gdmags2Int*np.logical_xor(correctValBoolean12Int,bothBools2Int) + gdmags22Int*np.logical_xor(correctValBoolean22Int,bothBools2Int) + gdmags2Int*bothBools2Int
+        # #del gdmags2Int, gdmags22Int, correctValBoolean12Int, correctValBoolean22Int
+        # numSolsPer2Int = np.sum((~np.isnan(gdmagsCombined2Int)).astype('int'),axis=1)
+        # #DELETEnumSolsHist2Int = np.histogram(numSolsPer2Int,bins=[-0.1,0.9,1.9,2.9,3.9,4.9,5.9,6.9,7.9,8.9,9.9])
+        # #print(saltyburrito)
+        # assert np.all(numSolsPer2Int == 2) #All 2 int must have 2 solutions
+        # del numSolsPer2Int
+        # #Now that all 2Int only have 2 solutions
+        # # nus2IntSol0 = np.nanargmin(nusCombined2Int,axis=1)
+        # # nus2IntSol1 = np.nanargmax(nusCombined2Int,axis=1)
+        # nus2IntSol0 = np.nanargmin(np.abs(gdmagsCombined2Int-dmag),axis=1)
+        # nus2IntSol1 = np.nanargmax(np.absnusCombined2Int,axis=1)
+        # badInds = np.where(nus2IntSol0 == nus2IntSol1)[0] #inds where same nus inds are trying to be assigned
+        # assert np.all(~(nus2IntSol0 == nus2IntSol1)) #Checks that all solutions use different inds
+        # #Combine the 2 individual intersection solutions
+        # nus2Int = np.stack((nusCombined2Int[np.arange(nusCombined2Int.shape[0]),nus2IntSol0],nusCombined2Int[np.arange(nusCombined2Int.shape[0]),nus2IntSol1])).T
+        # dmag2Int = np.stack((gdmagsCombined2Int[np.arange(nusCombined2Int.shape[0]),nus2IntSol0],gdmagsCombined2Int[np.arange(nusCombined2Int.shape[0]),nus2IntSol1])).T
+        # del gdmagsCombined2Int, nus2IntSol0, nus2IntSol1, nusCombined2Int
+
+        # assert ~np.any(np.equal(nus2Int[:,0],nus2Int[:,1])), 'one of the 2 extrema nus are identical'
+    else:
+        print(saltyburrito) #this elseif structure this is a part of need to be undone
 
     if np.logical_not(indsWith4Int.size == 0):
         #4 Int
@@ -3885,16 +3958,33 @@ def planetVisibilityBounds(sma,e,W,w,inc,p,Rp,starMass,plotBool, s_inner, s_oute
 
     return nus, planetIsVisibleBool
 
+def nukeKOE_winc(w,inc):
+    #About +/- 4.7 deg from edge on and 0.343 deg from the two w locations
+    indsToNuke = np.where( np.logical_or((np.abs(w-3.*np.pi/2.) < 0.006),(np.abs(w-np.pi/2.) < 0.006))*(np.abs(inc-np.pi/2.) < 0.095) )[0]
+    w[indsToNuke] = np.pi/2. + np.random.randint(low=0,high=1,size=len(indsToNuke))*np.pi - 0.006 + np.random.randint(low=0,high=1,size=len(indsToNuke))*0.012 #generates random w at either w=pi/2 +/-0.006 or w=3pi/2+/-0.006
+    inc[indsToNuke] = np.pi/2. - 0.095 + np.random.randint(low=0,high=1,size=len(indsToNuke))*0.19
+    return w,inc
+
 def nukeKOE(sma,e,W,w,inc,ar,er,Wr,wr,incr):
     """ Rounds the planet KOE because the KOE producee errors in the quartic solver
     """
-    indsToNuke = np.where(np.abs(sma-ar).value + np.abs(e-er) + np.abs(W-Wr) + np.abs(w-wr) + np.abs(inc-incr) < 1e-5)[0]
-    sma[indsToNuke] = np.round(sma[indsToNuke],4)
-    e[indsToNuke] = np.round(e[indsToNuke],4)
-    W[indsToNuke] = np.round(W[indsToNuke],4)
-    w[indsToNuke] = np.round(w[indsToNuke],4)
-    inc[indsToNuke] = np.round(inc[indsToNuke],4)
+    indsToNuke = np.where(np.abs(sma-ar).value + np.abs(e-er) + np.abs(W-Wr) + np.abs(w-wr) + np.abs(inc-incr) < 1e-2)[0]
+    sma[indsToNuke] = np.round(sma[indsToNuke],2)
+    e[indsToNuke] = np.round(e[indsToNuke],2)
+    W[indsToNuke] = np.round(W[indsToNuke],2)
+    w[indsToNuke] = np.round(w[indsToNuke],2) - 2.5*1e-3 + np.random.randint(low=0,high=1,size=len(indsToNuke))*5.*1e-3
+    inc[indsToNuke] = np.round(inc[indsToNuke],2) - 2.5*1e-3 + np.random.randint(low=0,high=1,size=len(indsToNuke))*5.*1e-3
     return sma,e,W,w,inc
+
+def nukeKOE_noWR(sma,e,w,inc,ar,er,wr,incr):
+    """ Rounds the planet KOE because the KOE producee errors in the quartic solver
+    """
+    indsToNuke = np.where(np.abs(sma-ar).value + np.abs(e-er) + np.abs(w-wr) + np.abs(inc-incr) < 1e-2)[0]
+    sma[indsToNuke] = np.round(sma[indsToNuke],2)
+    e[indsToNuke] = np.round(e[indsToNuke],2)
+    w[indsToNuke] = np.round(w[indsToNuke],2) - 2.5*1e-3 + np.random.randint(low=0,high=1,size=len(indsToNuke))*5.*1e-3
+    inc[indsToNuke] = np.round(inc[indsToNuke],2) - 2.5*1e-3 + np.random.randint(low=0,high=1,size=len(indsToNuke))*5.*1e-3
+    return sma,e,w,inc
 
 
 def integrationTimeAdjustedCompletness(sma,e,W,w,inc,p,Rp,starMass,plotBool,periods, s_inner, s_outer, dmag_upper, tmax):

@@ -530,10 +530,10 @@ def quarticSolutions_ellipse_to_Quarticipynb(A, B, C, D):
     x3 = -A/4. + p10/2. + np.sqrt(p11 - 2.*p6 - p8 + (-2.*C - p4)/p10)/2.
     zeroInds = np.where(p2 + p3**2./12. == 0)[0] #piecewise condition
     if len(zeroInds) != 0.:
-        x0[zeroInds] = -A[zeroInds]/4. - p9[zeroInds]/2. - np.sqrt(p11[zeroInds] + 2.*np.cbrt(p5[zeroInds]) + (2.*C[zeroInds] + p4[zeroInds])/p9[zeroInds])/2.
-        x1[zeroInds] = -A[zeroInds]/4. - p9[zeroInds]/2. + np.sqrt(p11[zeroInds] + 2.*np.cbrt(p5[zeroInds]) + (2.*C[zeroInds] + p4[zeroInds])/p9[zeroInds])/2.
-        x2[zeroInds] = -A[zeroInds]/4. + p9[zeroIminSepPoints_xnds]/2. - np.sqrt(p11[zeroInds] + 2.*np.cbrt(p5[zeroInds]) + (-2.*C[zeroInds] - p4[zeroInds])/p9[zeroInds])/2.
-        x3[zeroInds] = -A[zeroInds]/4. + p9[zeroInds]/2. + np.sqrt(p11[zeroInds] + 2.*np.cbrt(p5[zeroInds]) + (-2.*C[zeroInds] - p4[zeroInds])/p9[zeroInds])/2.
+        x0[zeroInds] = -A[zeroInds]/4. - p9[zeroInds]/2. - np.sqrt(p11[zeroInds] + 2.*np.cbrt(np.real(p5[zeroInds])) + (2.*C[zeroInds] + p4[zeroInds])/p9[zeroInds])/2.
+        x1[zeroInds] = -A[zeroInds]/4. - p9[zeroInds]/2. + np.sqrt(p11[zeroInds] + 2.*np.cbrt(np.real(p5[zeroInds])) + (2.*C[zeroInds] + p4[zeroInds])/p9[zeroInds])/2.
+        x2[zeroInds] = -A[zeroInds]/4. + p9[zeroIminSepPoints_xnds]/2. - np.sqrt(p11[zeroInds] + 2.*np.cbrt(np.real(p5[zeroInds])) + (-2.*C[zeroInds] - p4[zeroInds])/p9[zeroInds])/2.
+        x3[zeroInds] = -A[zeroInds]/4. + p9[zeroInds]/2. + np.sqrt(p11[zeroInds] + 2.*np.cbrt(np.real(p5[zeroInds])) + (-2.*C[zeroInds] - p4[zeroInds])/p9[zeroInds])/2.
 
     delta = 256.*D**3. - 192.*A*C*D**2. - 128.*B**2.*D**2. + 144.*B*C**2.*D - 27.*C**4.\
         + 144.*A**2.*B*D**2. - 6.*A**2.*C**2.*D - 80.*A*B**2.*C*D + 18.*A*B*C**3. + 16.*B**4.*D\

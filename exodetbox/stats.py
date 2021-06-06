@@ -31,7 +31,7 @@ def weighted_batch_mean(Nm,wmi,xmi,wm):
         floar:
             xm is the weighted mean
     """
-    xm = np.sum(wmi*xmi)/(wm*len(xmi))
+    xm = np.sum(wmi*xmi)/np.sum(wmi) #(wm*len(xmi)) #both interpretations of the denominator should be identical
     return xm
 
 def incremental_weighted_mean(xbarj,j,xbarm,wbarm,wbarj):
@@ -115,7 +115,7 @@ def incremental_weighted_standard_deviation(j,Nm,sigma_j,wbarm,wbarj,xbarm,xbarj
     """
     #std2 = np.sqrt(np.abs(np.nansum(wi*(xi-np.average(xi,weights=wi))**2.))/(np.nansum(wi)))
     wbaravg = (wbarj*j*Nm + wbarm*Nm)/(j*Nm+Nm)
-    stdjp1 = np.sqrt(np.abs(  (j*Nm)/(j*Nm+Nm)*sigma_j**2. +  Nm/(j*Nm+Nm)*np.nansum(wi*(xi-xbarm)**2.)/np.nansum(wi) + j*Nm**2/(j*Nm+Nm)**2.*(xbarjp1-xbarm)**2.        ))  #this one works
+    stdjp1 = np.sqrt(np.abs(  (j*Nm)/(j*Nm+Nm)*sigma_j**2. +  Nm/(j*Nm+Nm)*np.nansum(wi*(xi-xbarm)**2.)/(np.nansum(wi)) + j*Nm**2/(j*Nm+Nm)**2.*(xbarjp1-xbarm)**2.        ))  #this one works
 
     #stdjp1 = np.sqrt(np.abs((j*Nm)**2.*wbarj*sigma_j**2./(wbarj*(Nm+(j*Nm))**2.) + (Nm*wbarm)/(wbarj*(Nm+(j*Nm))**2.)*(-2.*xbarm*xbarjp1*Nm + Nm*xbarjp1**2.+np.nansum(xi**2.))))
     
@@ -125,8 +125,11 @@ def incremental_weighted_standard_deviation(j,Nm,sigma_j,wbarm,wbarj,xbarm,xbarj
     #stdjp1 = np.sqrt(np.abs(  (wbarj*(j*Nm)/(j*Nm+Nm)*sigma_j**2. +  wbarm*(Nm)/(j*Nm+Nm)*np.nansum(wi*(xi-xbarm)**2.)/np.sum(wi) + wbarj*wbarm*j*Nm**2/(j*Nm+Nm)**2.*(xbarjp1-xbarm)**2.  )/(wbaravg*(j*Nm+Nm))      )) 
     #stdjp1 = np.sqrt(np.abs(  (  wbarj*(j*Nm)*(j*Nm)/(j*Nm+Nm)*sigma_j**2. +  wbarm*Nm*Nm/(j*Nm+Nm)*np.nansum(wi*(xi-xbarm)**2.)/np.nansum(wi) + (wbaravg*(j*Nm+Nm))*j*Nm**2/(j*Nm+Nm)**2.*(xbarjp1-xbarm)**2.)/(wbaravg*(j*Nm+Nm))        )) 
 
+    if sigma_j > 1e-8 and (sigma_j**2. > 10.*(wbarj/wbarm) * Nm/(j*Nm+Nm)*np.nansum(wi*(xi-xbarm)**2.)/(np.nansum(wi))): #we have to include the sigma_j size tolerance because earthLike on Guimond will return 100%
+        print(saltyburrito)
 
-    # if stdjp1 > 2.*sigma_j:
+
+    # if stdjp1 > 1.2*sigma_j:
     #     print(saltyburrito)
     return stdjp1
 
@@ -166,9 +169,12 @@ def incremental_std_differentSizeBatches(Nj,Nm, sigma_j, xbarj, xi, xbarm):
     #std_jp1 = np.sqrt(np.abs(Nj/(Nj+Nm)*sigma_j**2. + 1./(Nj+Nm)**2 * (-2.*xbarm*xbarj*Nm + Nm**2.*xbarj**2. + np.nansum(xi**2.))))
     #std_jp1 = np.sqrt((Nj**2*sigma_j**2. + Nm*np.nansum((xi-xbarjp1)*(xi-xbarj)))/(Nj + Nm)**2)
     #std_jp1 = np.sqrt((Nj*(sigma_j**2. + np.mean(xi)**2.) + Nm*(np.std(xi)**2.+xbarj**2.))/(Nj + Nm) - ((Nj*np.mean(xbarj)+Nm*xbarm)/(Nj+Nm))**2)
-    std_jp1_tmp = np.sqrt(1./Nm*np.nansum((xi-xbarj)**2.))
-    std_jp1 = np.sqrt(Nj/(Nj+Nm)*sigma_j**2. + Nm/(Nj+Nm)*std_jp1_tmp**2.)
-    # if std_jp1 > 2.*sigma_j:
+
+
+    #KEEP std_jp1_tmp = np.sqrt(1./Nm*np.nansum((xi-xbarj)**2.))#Works
+    std_jp1_tmp = np.sqrt(1./Nm*np.nansum((xi-np.mean(xi))**2.))#Works
+    std_jp1 = np.sqrt(Nj/(Nj+Nm)*sigma_j**2. + Nm/(Nj+Nm)*std_jp1_tmp**2. + Nm*Nj/(Nj+Nm)**2.*(xbarj-np.mean(xi))**2.)
+    # if std_jp1 > 1.2*sigma_j:
     #     print(saltyburrito)
     return std_jp1
 

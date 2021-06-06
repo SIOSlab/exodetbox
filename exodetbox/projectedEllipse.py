@@ -532,7 +532,7 @@ def quarticSolutions_ellipse_to_Quarticipynb(A, B, C, D):
     if len(zeroInds) != 0.:
         x0[zeroInds] = -A[zeroInds]/4. - p9[zeroInds]/2. - np.sqrt(p11[zeroInds] + 2.*np.cbrt(np.real(p5[zeroInds])) + (2.*C[zeroInds] + p4[zeroInds])/p9[zeroInds])/2.
         x1[zeroInds] = -A[zeroInds]/4. - p9[zeroInds]/2. + np.sqrt(p11[zeroInds] + 2.*np.cbrt(np.real(p5[zeroInds])) + (2.*C[zeroInds] + p4[zeroInds])/p9[zeroInds])/2.
-        x2[zeroInds] = -A[zeroInds]/4. + p9[zeroIminSepPoints_xnds]/2. - np.sqrt(p11[zeroInds] + 2.*np.cbrt(np.real(p5[zeroInds])) + (-2.*C[zeroInds] - p4[zeroInds])/p9[zeroInds])/2.
+        x2[zeroInds] = -A[zeroInds]/4. + p9[zeroInds]/2. - np.sqrt(p11[zeroInds] + 2.*np.cbrt(np.real(p5[zeroInds])) + (-2.*C[zeroInds] - p4[zeroInds])/p9[zeroInds])/2.
         x3[zeroInds] = -A[zeroInds]/4. + p9[zeroInds]/2. + np.sqrt(p11[zeroInds] + 2.*np.cbrt(np.real(p5[zeroInds])) + (-2.*C[zeroInds] - p4[zeroInds])/p9[zeroInds])/2.
 
     delta = 256.*D**3. - 192.*A*C*D**2. - 128.*B**2.*D**2. + 144.*B*C**2.*D - 27.*C**4.\
@@ -653,11 +653,11 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
     #maxImagFirstCol = np.max(np.imag(yreal[yrealImagInds,0]))
     #DELETEassert np.max(np.imag(yreal[yrealImagInds,0])) == 0, 'max y imag component of column 0 is not 0'
     if len(yrealImagInds) > 0:
-        assert np.max(np.imag(yreal[yrealImagInds,0])) == 0, 'max y imag component of column 0 is not 0'
+        assert np.max(np.imag(yreal[yrealImagInds,0])) < 1e-4, 'max y imag component of column 0 is not 0'
     #maxImagSecondCol = np.max(np.imag(yreal[yrealImagInds,1]))
     #DELETEassert np.max(np.imag(yreal[yrealImagInds,1])) == 0, 'max y imag component of column 1 is not 0'
     if len(yrealImagInds) > 0:
-        assert np.max(np.imag(yreal[yrealImagInds,1])) == 0, 'max y imag component of column 1 is not 0'
+        assert np.max(np.imag(yreal[yrealImagInds,1])) < 1e-4, 'max y imag component of column 1 is not 0'
     # np.max(np.imag(yreal[yrealImagInds,2])) #this is quite large
     # np.max(np.imag(yreal[yrealImagInds,3])) #this is quite large
 
@@ -706,6 +706,15 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
                 smm0[inds] = smm1[inds]
                 smm1[inds] = tmp
             smm = np.asarray([smm0,smm1])
+        smp = np.asarray([smp0,smp1])
+        if not np.all(np.argmin(smp,axis=0) == 0):
+            indsOf0 = np.where(np.argmin(smp,axis=0) == 0)[0]
+            for i in np.arange(len(indsOf0)):
+                if np.abs(smp0[indsOf0[i]] - smp1[indsOf0[i]]) < 1e-5:
+                    #just swap them
+                    tmp = smp0[indsOf0[i]]
+                    smp0[indsOf0[i]] = smp1[indsOf0[i]]
+                    smp1[indsOf0[i]] = tmp
         smp = np.asarray([smp0,smp1])
         assert np.all(np.argmin(smp,axis=0) == 0), 'mins are not all are smp0'
         #myInd = yrealImagInds[np.where(np.logical_not(np.argmin(smp,axis=0) == 0))[0]]
@@ -1048,14 +1057,16 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
 
     #Solution Checks
     if not len(fourIntInds) == 0: #If this is the case, np.max does not work on empty sets
-        if np.max(np.imag(xreal2[yrealAllRealInds[fourIntInds]])) >= 1e-3:
-            myInds = np.where(np.imag(xreal2[yrealAllRealInds[fourIntInds],0]) >= 1e-3)[0]
+        if np.max(np.abs(np.imag(xreal2[yrealAllRealInds[fourIntInds]]))) >= 1e-3:
+            myInds = np.where(np.abs(np.imag(xreal2[yrealAllRealInds[fourIntInds],0])) >= 1e-3)[0]
             for myInd in myInds:
                 with open("/home/dean/Documents/exosims/twoDetMC/badKOE.py","a") as f:
                     f.write('#ellipseCircleIntersections 1' + '\n')
                     f.write('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]) + '\n')
                     f.write('badsma.append(ar.value),bader.append(er),badWr.append(Wr),badwr.append(wr),badinc.append(incr)' + '\n')
-        assert np.max(np.imag(xreal2[yrealAllRealInds[fourIntInds]])) < 1e-3, 'an Imag component of the all reals is too high!' #uses to be 1e-7 but would occasionally get errors so relaxing
+                    error = minSep
+        assert np.max(np.abs(np.imag(xreal2[yrealAllRealInds[fourIntInds]]))) < 1e-2, 'an Imag component of the all reals is too high!' #uses to be 1e-7 but would occasionally get errors so relaxing
+        #Actually, it seems this occurs when there is a high eccentricity and this high error is actually acceptable
     else:
         print('fourIntInds is empty') #Debuggin statement
     ########################################################################################
@@ -1307,6 +1318,13 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
         #Select the two smallest seems to be the correct solution. 
         # np.where(np.all(np.isnan(xarray[indsWith0]),axis=1))[0]
         # yrealAllRealInds[twoIntSameYInds[indsWith0]]
+
+        #Checking to see if sep extrema are close to s_circle
+        #minSep[yrealAllRealInds[twoIntSameYInds[indsWith0[1]]]]
+        #maxSep[yrealAllRealInds[twoIntSameYInds[indsWith0[1]]]]
+        #lminSep[twoIntSameYInds[indsWith0[1]]]
+        #lmaxSep[twoIntSameYInds[indsWith0[1]]]
+
         #Find the relevant planet index with 
         indsOfMin = np.nanargmin(errorarray[indsWith0],axis=1) #finds the ind of the minimum
         twoIntSameY_x[indsWith0,0] = xarray[indsWith0,indsOfMin]
@@ -1472,14 +1490,15 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
     twoIntOppositeX_x = np.zeros((len(twoIntOppositeXInds),2))
     twoIntOppositeX_y = np.zeros((len(twoIntOppositeXInds),2))
     if not len(twoIntOppositeXInds) == 0:
-        if np.max(np.imag(xreal2[yrealAllRealInds[twoIntOppositeXInds],0])) >= 1e-4:
-            myInds = np.where(np.imag(xreal2[yrealAllRealInds[twoIntOppositeXInds],0]) >= 1e-4)[0]
+        if np.max(np.abs(np.imag(xreal2[yrealAllRealInds[twoIntOppositeXInds],0]))) >= 1e-3:
+            myInds = np.where(np.abs(np.imag(xreal2[yrealAllRealInds[twoIntOppositeXInds],0])) >= 1e-3)[0]
             for myInd in myInds:
                 with open("/home/dean/Documents/exosims/twoDetMC/badKOE.py","a") as f:
                     f.write('#ellipseCircleIntersections 4' + '\n')
                     f.write('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]) + '\n')
                     f.write('badsma.append(ar.value),bader.append(er),badWr.append(Wr),badwr.append(wr),badinc.append(incr)' + '\n')
-        assert np.max(np.imag(xreal2[yrealAllRealInds[twoIntOppositeXInds],0])) < 1e-4, '' #was 1e-12 but caused problems changed to 1e-7
+        assert np.max(np.abs(np.imag(xreal2[yrealAllRealInds[twoIntOppositeXInds],0]))) < 1e-3, '' #was 1e-12 but caused problems changed to 1e-7
+        #Note this error just means a sep extrema is close to the s_circle
     else:
         print('twoIntOppositeXInds has length 0') #this is a debugging statement
     twoIntOppositeX_x[:,0] = np.real(xreal2[yrealAllRealInds[twoIntOppositeXInds],0])

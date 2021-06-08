@@ -125,8 +125,8 @@ def incremental_weighted_standard_deviation(j,Nm,sigma_j,wbarm,wbarj,xbarm,xbarj
     #stdjp1 = np.sqrt(np.abs(  (wbarj*(j*Nm)/(j*Nm+Nm)*sigma_j**2. +  wbarm*(Nm)/(j*Nm+Nm)*np.nansum(wi*(xi-xbarm)**2.)/np.sum(wi) + wbarj*wbarm*j*Nm**2/(j*Nm+Nm)**2.*(xbarjp1-xbarm)**2.  )/(wbaravg*(j*Nm+Nm))      )) 
     #stdjp1 = np.sqrt(np.abs(  (  wbarj*(j*Nm)*(j*Nm)/(j*Nm+Nm)*sigma_j**2. +  wbarm*Nm*Nm/(j*Nm+Nm)*np.nansum(wi*(xi-xbarm)**2.)/np.nansum(wi) + (wbaravg*(j*Nm+Nm))*j*Nm**2/(j*Nm+Nm)**2.*(xbarjp1-xbarm)**2.)/(wbaravg*(j*Nm+Nm))        )) 
 
-    if sigma_j > 1e-8 and (sigma_j**2. > 10.*(wbarj/wbarm) * Nm/(j*Nm+Nm)*np.nansum(wi*(xi-xbarm)**2.)/(np.nansum(wi))): #we have to include the sigma_j size tolerance because earthLike on Guimond will return 100%
-        print(saltyburrito)
+    # if sigma_j > 1e-8 and (sigma_j**2. > 10.*(wbarj/wbarm) * Nm/(j*Nm+Nm)*np.nansum(wi*(xi-xbarm)**2.)/(np.nansum(wi))): #we have to include the sigma_j size tolerance because earthLike on Guimond will return 100%
+    #     print(saltyburrito)
 
 
     # if stdjp1 > 1.2*sigma_j:

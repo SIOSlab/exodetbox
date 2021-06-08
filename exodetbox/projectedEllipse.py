@@ -515,7 +515,7 @@ def quarticSolutions_ellipse_to_Quarticipynb(A, B, C, D):
     p5 = -p0/108.-p1/8.+p2*p3/3.
     p6 = (p0/216.+p1/16.-p2*p3/6.+np.sqrt(p5**2./4.+(-p2-p3**2./12.)**3./27.))**(1./3.)
     p6Inds = np.where(p6==0.0)[0] #p6 being 0 causes divide by 0
-    p6[p6Inds] = np.ones(len(p6Inds))*10**-9
+    p6[p6Inds] = np.ones(len(p6Inds))*10**-10
     p7 = A**2./4.-2.*B/3.
     p8 = (2.*p2+p3**2./6.)/(3.*p6)
     #, (-2*p2-p3**2/6)/(3*p6)
@@ -649,7 +649,13 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
     #The following 7 lines can be deleted. it just says the first 2 cols of yreal have the smallest imaginary component
     yrealImagArgsortInds = np.argsort(np.abs(np.imag(yreal[yrealImagInds])),axis=1)
     assert len(yrealImagInds) == np.count_nonzero(yrealImagArgsortInds[:,0] == 0), "Not all first indicies have smallest Imag component"
-    assert len(yrealImagInds) == np.count_nonzero(yrealImagArgsortInds[:,1] == 1), "Not all first indicies have second smallest Imag component"
+    if not len(yrealImagInds) == np.count_nonzero(yrealImagArgsortInds[:,1] == 1):
+        indsOf1 = np.where(np.logical_not(yrealImagArgsortInds[:,1] == 1))[0]
+        if np.abs(yreal[yrealImagInds[indsOf1],1] - yreal[yrealImagInds[indsOf1],2]) < 1e-4: #1 and 2 are functionally identical, so we can just swap them
+            tmp = yreal[yrealImagInds[indsOf1],1]
+            yreal[yrealImagInds[indsOf1],1] = yreal[yrealImagInds[indsOf1],2] #just swap them
+            yreal[yrealImagInds[indsOf1],2] = tmp
+    assert len(yrealImagInds) == np.count_nonzero(yrealImagArgsortInds[:,1] == 1), "Not all second indicies have second smallest Imag component"
     #maxImagFirstCol = np.max(np.imag(yreal[yrealImagInds,0]))
     #DELETEassert np.max(np.imag(yreal[yrealImagInds,0])) == 0, 'max y imag component of column 0 is not 0'
     if len(yrealImagInds) > 0:
@@ -708,7 +714,7 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
             smm = np.asarray([smm0,smm1])
         smp = np.asarray([smp0,smp1])
         if not np.all(np.argmin(smp,axis=0) == 0):
-            indsOf0 = np.where(np.argmin(smp,axis=0) == 0)[0]
+            indsOf0 = np.where(np.argmin(smp,axis=0) == 1)[0]
             for i in np.arange(len(indsOf0)):
                 if np.abs(smp0[indsOf0[i]] - smp1[indsOf0[i]]) < 1e-5:
                     #just swap them
@@ -1049,6 +1055,18 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
 
     #Two intersections on same y-side of projected ellipse
     twoIntSameYInds = np.where(gtMinSepBool*ltLMinSepBool)[0]
+    #All NAN solution producing inds if all conditions
+    trashInds0 = np.where(np.abs(xreal2[yrealAllRealInds[twoIntSameYInds],0]) > a[yrealAllRealInds[twoIntSameYInds]])[0]
+    trashInds1 = np.where(np.abs(xreal2[yrealAllRealInds[twoIntSameYInds],1]) > a[yrealAllRealInds[twoIntSameYInds]])[0]
+    trashInds2 = np.where(np.abs(xreal2[yrealAllRealInds[twoIntSameYInds],2]) > a[yrealAllRealInds[twoIntSameYInds]])[0]
+    trashInds3 = np.where(np.abs(xreal2[yrealAllRealInds[twoIntSameYInds],3]) > a[yrealAllRealInds[twoIntSameYInds]])[0]
+    setOfTrashInds = set(trashInds0).intersection(set(trashInds1)).intersection(set(trashInds2)).intersection(set(trashInds3))
+    listOfTrashInds = list(setOfTrashInds)
+    if len(listOfTrashInds): #if there is a trashInd, remove from twoIntSameYInds
+        listOfTrashInds = sorted(listOfTrashInds,reverse=True) #list of inds from largest to smallest
+        for i in listOfTrashInds: #Remove trashInds from list of inds with twoInt
+            del twoIntSameYInds[i]
+
     #Four intersections total
     fourIntInds = np.where(gtLMinSepBool*ltLMaxSepBool)[0]
     #Two intersections opposite x-side
@@ -1313,6 +1331,9 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
                     f.write('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]) + '\n')
                     f.write('badsma.append(ar.value),bader.append(er),badWr.append(Wr),badwr.append(wr),badinc.append(incr)' + '\n')
             #print('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
+            #This can occur when lminSep is close to s_circle and sma is close to s_circle
+            #lminSep[twoIntSameYInds[indsWith0[tInd]]]
+            #lmaxSep[twoIntSameYInds[indsWith0[tInd]]]
         #assert not np.any(np.all(np.isnan(xarray[indsWith0]),axis=1)), 'Looks like one of the solutions is all NAN' #when this case was investigated, where xarray had all nans, it was caused by the quartic solver itself
         #The only solution I can come up with is to preemtively filter planets like this whenever they are encountered
         #Select the two smallest seems to be the correct solution. 

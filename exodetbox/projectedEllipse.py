@@ -708,9 +708,11 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
             print('mins are not all are smm1')
             indsOf0 = np.where(np.argmin(smm,axis=0) == 1)[0] #inds to check
             if np.all(np.abs(smm0[indsOf0] - smm1[indsOf0]) < 1e-8):
-                #tmp = smm0[indsOf0]
-                #smm0[indsOf0] = smm1[indsOf0] + 1e-6
-                smm1[indsOf0] = smm1[indsOf0] + 1e-6
+                tmp = smm0[indsOf0]
+                smm0[indsOf0] = smm1[indsOf0] + 1e-6
+                smm1[indsOf0] = tmp
+                if smm1[indsOf0[i]] <= smm0[indsOf0[i]]:
+                    smm1[indsOf0[i]] = smm1[indsOf0[i]] + 1e-6
             smm = np.asarray([smm0,smm1])
         smp = np.asarray([smp0,smp1])
         if not np.all(np.argmin(smp,axis=0) == 0):
@@ -718,11 +720,13 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
             for i in np.arange(len(indsOf0)):
                 if np.abs(smp0[indsOf0[i]] - smp1[indsOf0[i]]) < 1e-5:
                     #just swap them
-                    # tmp = smp0[indsOf0[i]]
-                    # smp0[indsOf0[i]] = smp1[indsOf0[i]]
-                    smp1[indsOf0[i]] = smp1[indsOf0[i]] + 1e-6
+                    tmp = smp0[indsOf0[i]]
+                    smp0[indsOf0[i]] = smp1[indsOf0[i]]
+                    smp1[indsOf0[i]] = tmp
+                    if smp1[indsOf0[i]] <= smp0[indsOf0[i]]:
+                        smp1[indsOf0[i]] = smp1[indsOf0[i]] + 1e-6
         smp = np.asarray([smp0,smp1])
-        assert np.all(np.argmin(smp,axis=0) == 0), 'mins are not all are smp0'
+        assert np.all(np.argmin(smp,axis=0) == 0), 'mins are not all smp0'
         #myInd = yrealImagInds[np.where(np.logical_not(np.argmin(smp,axis=0) == 0))[0]]
         #print('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
         spm = np.asarray([spm0,spm1])
@@ -731,11 +735,13 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
             for i in np.arange(len(indsOf0)):
                 if np.abs(spm0[indsOf0[i]] - spm1[indsOf0[i]]) < 1e-5:
                     #just swap them
-                    #tmp = spm0[indsOf0[i]]
-                    spm0[indsOf0[i]] = spm0[indsOf0[i]] + 1e-6
-                    #spm1[indsOf0[i]] = tmp
+                    tmp = spm0[indsOf0[i]]
+                    spm0[indsOf0[i]] = spm1[indsOf0[i]]
+                    spm1[indsOf0[i]] = tmp
+                    if spm0[indsOf0[i]] <= spm1[indsOf0[i]]:
+                        spm0[indsOf0[i]] = spm0[indsOf0[i]] + 1e-6
         spm = np.asarray([spm0,spm1])
-        assert np.all(np.argmin(spm,axis=0) == 1), 'mins are not all are spm1'
+        assert np.all(np.argmin(spm,axis=0) == 1), 'mins are not all spm1'
         #myInd = yrealImagInds[np.where(np.logical_not(np.argmin(spm,axis=0) == 1))[0]]
         #print('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
         spp = np.asarray([spp0,spp1])
@@ -745,9 +751,11 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
             print('mins are not all are spp1')
             indsOf0 = np.where(np.argmin(spp,axis=0) == 1)[0] #inds to check
             if np.all(np.abs(spp0[indsOf0] - spp1[indsOf0]) < 1e-8):
-                #tmp = spp0[indsOf0]
-                spp0[indsOf0] = spp0[indsOf0] + 1e-6
-                #spp1[indsOf0] = tmp
+                tmp = spp0[indsOf0]
+                spp0[indsOf0] = spp1[indsOf0]
+                spp1[indsOf0] = tmp
+                if spp1[indsOf0[i]] <= spp0[indsOf0[i]]:
+                    spp1[indsOf0[i]] = spp1[indsOf0[i]] + 1e-6
             spp = np.asarray([spp0,spp1])
         #above says smallest must be one of these: smm1, smp0, spm1, spp1
         #The following are where each of these separations are 0

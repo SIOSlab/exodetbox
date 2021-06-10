@@ -706,11 +706,11 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
         if not np.all(np.argmin(smm,axis=0) == 1):
             #do some additional checking
             print('mins are not all are smm1')
-            inds = np.where(np.argmin(smm,axis=0) == 1)[0] #inds to check
-            if np.all(np.abs(smm0[inds] - smm1[inds]) < 1e-8):
-                tmp = smm0[inds]
-                smm0[inds] = smm1[inds]
-                smm1[inds] = tmp
+            indsOf0 = np.where(np.argmin(smm,axis=0) == 1)[0] #inds to check
+            if np.all(np.abs(smm0[indsOf0] - smm1[indsOf0]) < 1e-8):
+                #tmp = smm0[indsOf0]
+                #smm0[indsOf0] = smm1[indsOf0] + 1e-6
+                smm1[indsOf0] = smm1[indsOf0] + 1e-6
             smm = np.asarray([smm0,smm1])
         smp = np.asarray([smp0,smp1])
         if not np.all(np.argmin(smp,axis=0) == 0):
@@ -718,9 +718,9 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
             for i in np.arange(len(indsOf0)):
                 if np.abs(smp0[indsOf0[i]] - smp1[indsOf0[i]]) < 1e-5:
                     #just swap them
-                    tmp = smp0[indsOf0[i]]
-                    smp0[indsOf0[i]] = smp1[indsOf0[i]]
-                    smp1[indsOf0[i]] = tmp
+                    # tmp = smp0[indsOf0[i]]
+                    # smp0[indsOf0[i]] = smp1[indsOf0[i]]
+                    smp1[indsOf0[i]] = smp1[indsOf0[i]] + 1e-6
         smp = np.asarray([smp0,smp1])
         assert np.all(np.argmin(smp,axis=0) == 0), 'mins are not all are smp0'
         #myInd = yrealImagInds[np.where(np.logical_not(np.argmin(smp,axis=0) == 0))[0]]
@@ -731,9 +731,9 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
             for i in np.arange(len(indsOf0)):
                 if np.abs(spm0[indsOf0[i]] - spm1[indsOf0[i]]) < 1e-5:
                     #just swap them
-                    tmp = spm0[indsOf0[i]]
-                    spm0[indsOf0[i]] = spm1[indsOf0[i]]
-                    spm1[indsOf0[i]] = tmp
+                    #tmp = spm0[indsOf0[i]]
+                    spm0[indsOf0[i]] = spm0[indsOf0[i]] + 1e-6
+                    #spm1[indsOf0[i]] = tmp
         spm = np.asarray([spm0,spm1])
         assert np.all(np.argmin(spm,axis=0) == 1), 'mins are not all are spm1'
         #myInd = yrealImagInds[np.where(np.logical_not(np.argmin(spm,axis=0) == 1))[0]]
@@ -743,11 +743,11 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
         if not np.all(np.argmin(spp,axis=0) == 1):
             #do some additional checking
             print('mins are not all are spp1')
-            inds = np.where(np.argmin(spp,axis=0) == 1)[0] #inds to check
-            if np.all(np.abs(spp0[inds] - spp1[inds]) < 1e-8):
-                tmp = spp0[inds]
-                spp0[inds] = spp1[inds]
-                spp1[inds] = tmp
+            indsOf0 = np.where(np.argmin(spp,axis=0) == 1)[0] #inds to check
+            if np.all(np.abs(spp0[indsOf0] - spp1[indsOf0]) < 1e-8):
+                #tmp = spp0[indsOf0]
+                spp0[indsOf0] = spp0[indsOf0] + 1e-6
+                #spp1[indsOf0] = tmp
             spp = np.asarray([spp0,spp1])
         #above says smallest must be one of these: smm1, smp0, spm1, spp1
         #The following are where each of these separations are 0
@@ -1064,8 +1064,7 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
     listOfTrashInds = list(setOfTrashInds)
     if len(listOfTrashInds): #if there is a trashInd, remove from twoIntSameYInds
         listOfTrashInds = sorted(listOfTrashInds,reverse=True) #list of inds from largest to smallest
-        for i in listOfTrashInds: #Remove trashInds from list of inds with twoInt
-            del twoIntSameYInds[i]
+        twoIntSameYInds = np.delete(twoIntSameYInds,listOfTrashInds)
 
     #Four intersections total
     fourIntInds = np.where(gtLMinSepBool*ltLMaxSepBool)[0]
@@ -3356,7 +3355,7 @@ def solve_dmag_Poly(dmag,e,inc,w,a,p,Rp):
 
     return out
 
-def calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2Int, indsWith4Int):
+def calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2Int, indsWith4Int, lmindmag, lmaxdmag):
     """ This method calculates nu of a planet which have the provided dmag assuming a quasi-lambert phase function fullEqnX from AnalyticalNuFromDmag3.ipynb
     Args:
         dmag (ndarray):
@@ -3585,13 +3584,57 @@ def calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2Int, 
         #4 Int
         out4Int = solve_dmag_Poly(dmag,e[indsWith4Int],inc[indsWith4Int],w[indsWith4Int],a[indsWith4Int],p[indsWith4Int],Rp[indsWith4Int])
         #Throw out roots not in correct bounds
-        inBoundsBools4Int = (np.abs(out4Int.imag) <= 1e-7)*(out4Int.real >= -1.-1e-9)*(out4Int.real <= 1.+1e-9) #the out2 solutions that are inside of the desired bounds
+        #OLDinBoundsBools4Int = (np.abs(out4Int.imag) <= 1e-7)*(out4Int.real >= -1.-1e-9)*(out4Int.real <= 1.+1e-9) #the out2 solutions that are inside of the desired bounds
+        inBoundsBools4Int = (np.abs(out4Int.imag) <= 1e-7)*(out4Int.real >= -1.)*(out4Int.real <= 1.) #the out2 solutions that are inside of the desired bounds
         outBoundsBools4Int = np.logical_not(inBoundsBools4Int) # the out2 solutions that are inside the desired bounds
         outReal4Int = np.zeros(out4Int.shape) #just getting something with the right shape
         outReal4Int[outBoundsBools4Int] = np.real(out4Int[outBoundsBools4Int])*np.nan
         outReal4Int[inBoundsBools4Int] = np.real(out4Int[inBoundsBools4Int])
         #del out4Int
         outReal4Int = np.real(outReal4Int)
+
+        #There will be an error because all are nan and we need at least 4 non-nan solutions
+        if np.any(np.all(np.isnan(outReal4Int),axis=1)): #If any have all nan solutions
+            indsOfNan = np.where(np.all(np.isnan(outReal4Int),axis=1))[0]
+            #Do I need to iterate over indsOfNan?
+            tmp = out4Int[indsOfNan]
+            inBoundsBoolTmp = (tmp.real >= -1.)*(tmp.real <= 1.)
+            tmp[np.logical_not(inBoundsBoolTmp)] = np.nan
+            tmp1 = np.real(tmp)
+            #Go through full dmag calculation
+            tmpnu1 = np.arccos(tmp1)
+            tmpnu2 = 2.*np.pi - tmpnu1
+            #For arccos in 0-pi
+            tmpPhi1 = (1.+np.sin(np.tile(inc[indsWith4Int[indsOfNan]],(8,1)).T)*np.sin(tmpnu1+np.tile(w[indsWith4Int[indsOfNan]],(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
+            tmpd1 = np.tile(a[indsWith4Int[indsOfNan]].to('AU'),(8,1)).T*(1.-np.tile(e[indsWith4Int[indsOfNan]],(8,1)).T**2.)/(np.tile(e[indsWith4Int[indsOfNan]],(8,1)).T*np.cos(tmpnu1)+1.)
+            tmpdmag1 = deltaMag(np.tile(p[indsWith4Int[indsOfNan]],(8,1)).T,np.tile(Rp[indsWith4Int[indsOfNan]].to('AU'),(8,1)).T,tmpd1,tmpPhi1) #calculate dmag of the specified x-value
+            #For arccos in pi-2pi 
+            tmpPhi2 = (1.+np.sin(np.tile(inc[indsWith4Int[indsOfNan]],(8,1)).T)*np.sin(tmpnu2+np.tile(w[indsWith4Int[indsOfNan]],(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
+            tmpd2 = np.tile(a[indsWith4Int[indsOfNan]].to('AU'),(8,1)).T*(1.-np.tile(e[indsWith4Int[indsOfNan]],(8,1)).T**2.)/(np.tile(e[indsWith4Int[indsOfNan]],(8,1)).T*np.cos(tmpnu2)+1.)
+            tmpdmag2 = deltaMag(np.tile(p[indsWith4Int[indsOfNan]],(8,1)).T,np.tile(Rp[indsWith4Int[indsOfNan]].to('AU'),(8,1)).T,tmpd2,tmpPhi2) #calculate dmag of the specified x-value
+            tmpdmagArray = np.concatenate((tmpdmag1,tmpdmag2),axis=1)[0]
+            alltmpnus = np.concatenate((tmpnu1,tmpnu2),axis=1)[0]
+            sortedInds = np.argsort(np.abs(dmag-tmpdmagArray))
+            tmpnuInds = []
+            tmpnus = []
+            for i in sortedInds:
+                if len(tmpnuInds) <= 3: #we only need 4 unique inds
+                    if len(tmpnus) == 0:
+                        tmpnuInds.append(i)
+                        tmpnus.append(alltmpnus[i])
+                    elif not i+8 in tmpnuInds and not i-8 in tmpnuInds and np.min(np.abs(alltmpnus[i] - tmpnus)) > 1e-7: #ensure this ind's counterpart is not being used
+                        tmpnuInds.append(i)
+                        tmpnus.append(alltmpnus[i])
+            tmpReal = np.real(alltmpnus)
+            outReal4Int[indsOfNan] = np.nan
+            outReal4Int[indsOfNan,np.mod(tmpnuInds[0],8)] = tmpReal[tmpnuInds[0]]
+            outReal4Int[indsOfNan,np.mod(tmpnuInds[1],8)] = tmpReal[tmpnuInds[1]]
+            outReal4Int[indsOfNan,np.mod(tmpnuInds[2],8)] = tmpReal[tmpnuInds[2]]
+            outReal4Int[indsOfNan,np.mod(tmpnuInds[3],8)] = tmpReal[tmpnuInds[3]]
+            #MIGHT NEED TO GO THROUGH AND 
+            #DELETE out4RealInt[indsOfNan] = out4Int
+            #We need to calculate the dmag of this specific case and determine how close it is to the lmindmag or lmaxdmag
+            #We If the numbers are acceptably close, just nix the imaginary part and use the real of the closest viable solutions. This seems reasonable
 
         #### Calculate nu from out (both 0-pi and pi-2pi)
         nuReal4Int = np.ones(outReal4Int.shape)*np.nan
@@ -3953,7 +3996,7 @@ def planetVisibilityBounds(sma,e,W,w,inc,p,Rp,starMass,plotBool, s_inner, s_oute
     print('Num Planets with given 4 Int given dmag: ' + str(np.sum((dmaglminAll < dmag_upper)*(dmaglmaxAll > dmag_upper))))
     indsWith4Int = indsWith4[np.where((dmaglminAll < dmag_upper)*(dmaglmaxAll > dmag_upper))[0]]
     indsWith2Int = list(set(np.where((mindmag < dmag_upper)*(maxdmag > dmag_upper))[0]) - set(indsWith4Int))
-    nus2Int, nus4Int, dmag2Int, dmag4Int = calc_planetnu_from_dmag(dmag_upper,e,inc,w,sma*u.AU,p,Rp,mindmag, maxdmag, indsWith2Int, indsWith4Int)
+    nus2Int, nus4Int, dmag2Int, dmag4Int = calc_planetnu_from_dmag(dmag_upper,e,inc,w,sma*u.AU,p,Rp,mindmag, maxdmag, indsWith2Int, indsWith4Int, dmaglminAll, dmaglmaxAll)
     nus[indsWith2Int,8:10] = nus2Int
     nus[indsWith4Int,8:12] = nus4Int
     #### nu From dmag_lower
@@ -3966,7 +4009,7 @@ def planetVisibilityBounds(sma,e,W,w,inc,p,Rp,starMass,plotBool, s_inner, s_oute
         print('Num Planets with given 4 Int given dmag: ' + str(np.sum((dmaglminAll < dmag_lower)*(dmaglmaxAll > dmag_lower))))
         indsWith4Int = indsWith4[np.where((dmaglminAll < dmag_lower)*(dmaglmaxAll > dmag_lower))[0]]
         indsWith2Int = list(set(np.where((mindmag < dmag_lower)*(maxdmag > dmag_lower))[0]) - set(indsWith4Int))
-        nus2Int, nus4Int, dmag2Int, dmag4Int = calc_planetnu_from_dmag(dmag_lower,e,inc,w,sma*u.AU,p,Rp,mindmag, maxdmag, indsWith2Int, indsWith4Int)
+        nus2Int, nus4Int, dmag2Int, dmag4Int = calc_planetnu_from_dmag(dmag_lower,e,inc,w,sma*u.AU,p,Rp,mindmag, maxdmag, indsWith2Int, indsWith4Int, dmaglminAll, dmaglmaxAll)
         nus[indsWith2Int,12:14] = nus2Int
         nus[indsWith4Int,12:16] = nus4Int
     ########################################################################

@@ -651,10 +651,12 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
     assert len(yrealImagInds) == np.count_nonzero(yrealImagArgsortInds[:,0] == 0), "Not all first indicies have smallest Imag component"
     if not len(yrealImagInds) == np.count_nonzero(yrealImagArgsortInds[:,1] == 1):
         indsOf1 = np.where(np.logical_not(yrealImagArgsortInds[:,1] == 1))[0]
-        if np.abs(yreal[yrealImagInds[indsOf1],1] - yreal[yrealImagInds[indsOf1],2]) < 1e-4: #1 and 2 are functionally identical, so we can just swap them
+        if np.abs(yreal[yrealImagInds[indsOf1],1] - yreal[yrealImagInds[indsOf1],2]) < 5.*1e-3: #1 and 2 are functionally identical, so we can just swap them
             tmp = yreal[yrealImagInds[indsOf1],1]
             yreal[yrealImagInds[indsOf1],1] = yreal[yrealImagInds[indsOf1],2] #just swap them
             yreal[yrealImagInds[indsOf1],2] = tmp
+            yrealImagArgsortInds[indsOf1,1]=1
+            yrealImagArgsortInds[indsOf1,2]=2
     assert len(yrealImagInds) == np.count_nonzero(yrealImagArgsortInds[:,1] == 1), "Not all second indicies have second smallest Imag component"
     #maxImagFirstCol = np.max(np.imag(yreal[yrealImagInds,0]))
     #DELETEassert np.max(np.imag(yreal[yrealImagInds,0])) == 0, 'max y imag component of column 0 is not 0'
@@ -2774,13 +2776,18 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
     allNanInds = np.where(np.all(np.isnan(out),axis=1))[0]
     outReal[allNanInds] = outSaved[allNanInds].real
     outReal[allNanInds][np.logical_not((np.abs(outSaved[allNanInds].imag) <= 1e-3)*(outSaved[allNanInds].real >= -1.)*(outSaved[allNanInds].real <= 1.))] = np.nan
+    for i in np.arange(len(allNanInds)):
+        boolsToNan = np.logical_not((np.abs(outSaved[allNanInds[i]].imag) <= 1e-3)*(outSaved[allNanInds[i]].real >= -1.)*(outSaved[allNanInds[i]].real <= 1.))
+        for j in np.arange(8):
+            if boolsToNan[j]:
+                outReal[allNanInds[i],j] = np.nan
 
     #For arccos in 0-pi
     nuReal = np.ones(outReal.shape)*np.nan
     nuReal[inBoundsBools] = np.arccos(outReal[inBoundsBools]) #calculate arccos, there are 2 potential solutions... need to calculate both
-    if np.any(np.all(np.isnan(nuReal),axis=1)): #one of the planets has no solutions... this is a problem
-        myInd = np.where(np.all(np.isnan(nuReal),axis=1))[0]
-        #print('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
+    #DELETE if np.any(np.all(np.isnan(nuReal),axis=1)): #one of the planets has no solutions... this is a problem
+    #     myInd = np.where(np.all(np.isnan(nuReal),axis=1))[0]
+    #     #print('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
     gPhi = (1.+np.sin(np.tile(inc,(8,1)).T)*np.sin(nuReal+np.tile(w,(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
     gd = np.tile(a.to('AU'),(8,1)).T*(1.-np.tile(e,(8,1)).T**2.)/(np.tile(e,(8,1)).T*np.cos(nuReal)+1.)
     gdmags = deltaMag(np.tile(p,(8,1)).T,np.tile(Rp.to('AU'),(8,1)).T,gd,gPhi) #calculate dmag of the specified x-value

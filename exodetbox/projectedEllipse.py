@@ -661,10 +661,20 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
     #maxImagFirstCol = np.max(np.imag(yreal[yrealImagInds,0]))
     #DELETEassert np.max(np.imag(yreal[yrealImagInds,0])) == 0, 'max y imag component of column 0 is not 0'
     if len(yrealImagInds) > 0:
+        if np.max(np.imag(yreal[yrealImagInds,0])) < 1e-4:
+            #lets just try saying the imaginary component of this offending ind(s) is 0
+            myInds = np.where(np.imag(yreal[yrealImagInds,0])>=1e-4)
+            for i in np.arange(len(myInds)):
+                yreal[yrealImagInds[myInds[i]],0] = np.real(yreal[yrealImagInds[myInds[i]],0])
         assert np.max(np.imag(yreal[yrealImagInds,0])) < 1e-4, 'max y imag component of column 0 is not 0'
     #maxImagSecondCol = np.max(np.imag(yreal[yrealImagInds,1]))
-    #DELETEassert np.max(np.imag(yreal[yrealImagInds,1])) == 0, 'max y imag component of column 1 is not 0'
+    #DELETEassert np.max(np.imag(yreal[yrealImagInds,1])) == 0, 'max y imag component of column 1 is not 0'    
     if len(yrealImagInds) > 0:
+        if np.max(np.imag(yreal[yrealImagInds,1])) < 1e-4:
+            #lets just try saying the imaginary component of this offending ind(s) is 0
+            myInds = np.where(np.imag(yreal[yrealImagInds,1])>=1e-4)
+            for i in np.arange(len(myInds)):
+                yreal[yrealImagInds[myInds[i]],1] = np.real(yreal[yrealImagInds[myInds[i]],1])
         assert np.max(np.imag(yreal[yrealImagInds,1])) < 1e-4, 'max y imag component of column 1 is not 0'
     # np.max(np.imag(yreal[yrealImagInds,2])) #this is quite large
     # np.max(np.imag(yreal[yrealImagInds,3])) #this is quite large
@@ -2420,23 +2430,20 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
     #xreal, delta, P, D2, R, delta_0 = quarticSolutions_ellipse_to_Quarticipynb(A.astype('complex128'), B, C, D)
     xreal, _, _, _, _, _ = quarticSolutions_ellipse_to_Quarticipynb(A.astype('complex128'), B, C, D)
     del A, B, C, D #delting for memory efficiency
-    if not np.max(np.nanmin(np.abs(np.imag(xreal)),axis=1)) < 1e-5:
-        myInd = np.where(np.nanmin(np.abs(np.imag(xreal)),axis=1) >= 1e-5)[0][0]
-        print('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
-        print('badsma.append(ar.value),bader.append(er),badWr.append(Wr),badwr.append(wr),badinc.append(incr)')
-        with open("/home/dean/Documents/exosims/twoDetMC/badKOE.py","a") as f:
-            f.write('#calcMasterIntersections' + '\n')
-            f.write('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]) + '\n')
-            f.write('badsma.append(ar.value),bader.append(er),badWr.append(Wr),badwr.append(wr),badinc.append(incr)' + '\n')
-    assert np.max(np.nanmin(np.abs(np.imag(xreal)),axis=1)) < 1e-5, 'At least one row has min > 1e-5' #this ensures each row has a solution
-    #myInd = np.where(np.nanmin(np.abs(np.imag(xreal)),axis=1) > 1e-5)
-    #print('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
-    #print(w[np.argmax(np.nanmin(np.abs(np.imag(xreal)),axis=1))]) #prints the argument of perigee (assert above fails on 1.57 or 1.5*pi)
-    #Failure of the above occured where w=4.712 which is approx 1.5pi
-    #NOTE: originally 1e-15 but there were some with x=1e-7 and w=pi/2, 5e-6 from 
-    #DELETEtind = np.argmax(np.nanmin(np.abs(np.imag(xreal)),axis=1)) #DELETE
-    #DELETEtinds = np.argsort(np.nanmin(np.abs(np.imag(xreal)),axis=1)) #DELETE
-    #DELETEdel tind, tinds #DELETE
+
+    #TRYING TO LET THIS GO AND JUST SEE WHAT HAPPENS
+    # if not np.max(np.nanmin(np.abs(np.imag(xreal)),axis=1)) < 1e-5:
+    #     myInd = np.where(np.nanmin(np.abs(np.imag(xreal)),axis=1) >= 1e-5)[0][0]
+    #     print('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
+    #     print('badsma.append(ar.value),bader.append(er),badWr.append(Wr),badwr.append(wr),badinc.append(incr)')
+    #     with open("/home/dean/Documents/exosims/twoDetMC/badKOE.py","a") as f:
+    #         f.write('#calcMasterIntersections' + '\n')
+    #         f.write('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]) + '\n')
+    #         f.write('badsma.append(ar.value),bader.append(er),badWr.append(Wr),badwr.append(wr),badinc.append(incr)' + '\n')
+    # assert np.max(np.nanmin(np.abs(np.imag(xreal)),axis=1)) < 1e-5, 'At least one row has min > 1e-5' #this ensures each row has a solution.
+
+
+    #AT LEAST ONE INSTANCE OF THIS OCCURED WHERE THE ELLIPSE IS EFFECTIVELY A CIRCLE AND THE THE SMA IS >> S_CIRCLE
     xreal.real = np.abs(xreal) #all solutions should be positive
     # stop7 = time.time()
     # print('stop7: ' + str(stop7-start7))

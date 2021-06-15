@@ -661,7 +661,7 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
     #maxImagFirstCol = np.max(np.imag(yreal[yrealImagInds,0]))
     #DELETEassert np.max(np.imag(yreal[yrealImagInds,0])) == 0, 'max y imag component of column 0 is not 0'
     if len(yrealImagInds) > 0:
-        if np.max(np.imag(yreal[yrealImagInds,0])) < 1e-4:
+        if not np.max(np.imag(yreal[yrealImagInds,0])) < 1e-4:
             #lets just try saying the imaginary component of this offending ind(s) is 0
             myInds = np.where(np.imag(yreal[yrealImagInds,0])>=1e-4)
             for i in np.arange(len(myInds)):
@@ -670,7 +670,7 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
     #maxImagSecondCol = np.max(np.imag(yreal[yrealImagInds,1]))
     #DELETEassert np.max(np.imag(yreal[yrealImagInds,1])) == 0, 'max y imag component of column 1 is not 0'    
     if len(yrealImagInds) > 0:
-        if np.max(np.imag(yreal[yrealImagInds,1])) < 1e-4:
+        if not np.max(np.imag(yreal[yrealImagInds,1])) < 1e-4:
             #lets just try saying the imaginary component of this offending ind(s) is 0
             myInds = np.where(np.imag(yreal[yrealImagInds,1])>=1e-4)
             for i in np.arange(len(myInds)):

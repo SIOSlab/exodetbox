@@ -4,8 +4,8 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from projectedEllipse import xyz_3Dellipse
-from projectedEllipse import timeFromTrueAnomaly
+from exodetbox.projectedEllipse import xyz_3Dellipse
+from exodetbox.projectedEllipse import timeFromTrueAnomaly
 import astropy.units as u
 
 ##########################################################################################################

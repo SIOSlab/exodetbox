@@ -4016,6 +4016,11 @@ def planetVisibilityBounds(sma,e,W,w,inc,p,Rp,starMass,plotBool, s_inner, s_oute
     print('Num Planets with given 4 Int given dmag: ' + str(np.sum((dmaglminAll < dmag_upper)*(dmaglmaxAll > dmag_upper))))
     indsWith4Int = indsWith4[np.where((dmaglminAll < dmag_upper)*(dmaglmaxAll > dmag_upper))[0]]
     indsWith2Int = list(set(np.where((mindmag < dmag_upper)*(maxdmag > dmag_upper))[0]) - set(indsWith4Int))
+    #WAS WORKING ON IMPLEMENTING SOMETHING HERE, BUT INPUT DMAG SHOULD HAVE RESTRICTIONS (I.E. STRICTLY POSITIVE DMAG)
+    if len(indsWith2Int)+len(indsWith4Int) == 0: #Handling the case where there are no dmag intersections and 
+        if np.min(mindmag) > dmag_upper: #the brightest planet is not visible with the give upper limit of dmag
+            return nus, np.zeros((len(sma),17))
+    assert len(indsWith2Int)+len(indsWith4Int) > 0, "The number of inds with 2Int and 4Int is 0, so no intersections are occuring. May be because the mindiag"
     nus2Int, nus4Int, dmag2Int, dmag4Int = calc_planetnu_from_dmag(dmag_upper,e,inc,w,sma*u.AU,p,Rp,mindmag, maxdmag, indsWith2Int, indsWith4Int, dmaglminAll, dmaglmaxAll)
     nus[indsWith2Int,8:10] = nus2Int
     nus[indsWith4Int,8:12] = nus4Int
@@ -4114,7 +4119,10 @@ def integrationTimeAdjustedCompletness(sma,e,W,w,inc,p,Rp,starMass,plotBool,peri
         totalCompleteness_maxIntTimeCorrected (float):
             integration time adjusted completeness
     """
+    assert dmag_upper > 0., "dmag_upper is not positive real"
     nus, planetIsVisibleBool = planetVisibilityBounds(sma,e,W,w,inc,p,Rp,starMass,plotBool, s_inner, s_outer, dmag_upper, dmag_lower=None) #Calculate planet-star nu edges and visible regions
+    if np.all(np.isnan(planetIsVisibleBool)): #the case when dmag_upper < the brightest possible planet
+        return 0
     ts = timeFromTrueAnomaly(nus,np.tile(periods,(18,1)).T*u.year.to('day'),np.tile(e,(18,1)).T) #Calculate the planet-star intersection edges
     dt = ts[:,1:] - ts[:,:-1] #Calculate time region widths
     gtIntLimit = dt > tmax #Create boolean array for inds

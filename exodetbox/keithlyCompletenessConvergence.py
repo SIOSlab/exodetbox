@@ -471,6 +471,12 @@ if calcCompBool == True:
     wr = 0.855702648666915
     incr = 1.434416369881624
     badsma.append(ar.value),bader.append(er),badWr.append(Wr),badwr.append(wr),badinc.append(incr)
+    ar = 1.0884606079076993*u.AU
+    er = 0.21378463005403653
+    Wr = 2.616053628003294
+    wr = 5.143848386448817
+    incr = 1.2000237699749101
+    badsma.append(ar.value),bader.append(er),badWr.append(Wr),badwr.append(wr),badinc.append(incr)
 
 
     # num=69
@@ -590,7 +596,7 @@ if calcBrownComp == True:
 # Plot Convergence Plot
 if plotBool==True:
     #### Load Keithly Completeness CSV File 
-    with open('./keithlyCompConvergence.csv', newline='') as f:
+    with open('./convergence_data/keithlyCompConvergence.csv', newline='') as f:
         reader = csv.reader(f)
         data = list(reader)
     data = np.asarray(data,dtype='float') #convert data into an array
@@ -602,7 +608,7 @@ if plotBool==True:
         cumPlans.append(cumPlans[i]+data[i+1,0])
         cumComp.append((cumComp[i]*cumPlans[i] + data[i+1,0]*data[i+1,1])/(cumPlans[i+1]))
     #### Load Brown Completeness
-    with open('./brownCompConvergence.csv', newline='') as f:
+    with open('./convergence_data/brownCompConvergence.csv', newline='') as f:
         reader = csv.reader(f)
         data2 = list(reader)
     data2 = np.asarray(data2,dtype='float') #convert data into an array
@@ -697,6 +703,11 @@ if plotBool==True:
     keithlyComp_mean = data[:,1].mean()
     keithlyTime_sigma1 = data[:,2].std()
     keithlyTime_mean = data[:,2].mean()
+    #DELETE cant do this calc brownComp_sigma1 = np.average(data2[:,1],weights=data2[:,0])
+    brownComp_mean = np.average(data2[:,1],weights=data2[:,0])
+    brownTime_sigma1 = data2[:,2].std()
+    brownTime_mean = data2[:,2].mean()
+
     num=124
     plt.figure(num=num)
     plt.hist(data[:,1])

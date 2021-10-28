@@ -1679,6 +1679,8 @@ def intersectionFixer_pm(x, y, sep_xlocs, sep_ylocs, afflictedIndsxy, rs):
         sep_ylocs (numpy array):
             quadrant adjusted y components of proposed locations of ellipse circle intersections
     """
+    sep_xlocs_out = sep_xlocs
+    sep_ylocs_out = sep_ylocs
     # seps = np.sqrt((sep_xlocs-x[afflictedIndsxy])**2 + (sep_ylocs-y[afflictedIndsxy])**2) #calculate error for all TwoIntSameY
     # error = np.abs(np.sort(-np.abs(np.ones(len(seps)) - seps))) #calculate error for all TwoIntSameY
     # largeErrorInds = np.where(error > 1e-7)[0] #get inds of large errors
@@ -1691,7 +1693,7 @@ def intersectionFixer_pm(x, y, sep_xlocs, sep_ylocs, afflictedIndsxy, rs):
     # error = np.abs(np.sort(-np.abs(np.ones(len(seps)) - seps)))
     # indsToFix = np.argsort(-np.abs(np.ones(len(seps)) - seps))[np.where(error > 1e-7)[0]]
 
-    seps = np.sqrt((sep_xlocs-x[afflictedIndsxy])**2 + (sep_ylocs-y[afflictedIndsxy])**2) #calculate error for all TwoIntSameY
+    seps = np.sqrt((sep_xlocs-x[afflictedIndsxy])**2. + (sep_ylocs-y[afflictedIndsxy])**2.) #calculate error for all TwoIntSameY
     error = np.abs(rs - seps) #calculate error for all TwoIntSameY
     indsToFix = np.where(error > 1e-7)[0] #get inds of large errors
     #DELETEerror = np.abs(np.sort(-np.abs(rs[afflictedIndsxy] - seps))) #calculate error for all TwoIntSameY
@@ -1700,9 +1702,9 @@ def intersectionFixer_pm(x, y, sep_xlocs, sep_ylocs, afflictedIndsxy, rs):
     if len(indsToFix) == 0: #There are no inds to fix
         return sep_xlocs, sep_ylocs
 
-    seps_decidingpm = np.sqrt((sep_xlocs[indsToFix]-x[afflictedIndsxy[indsToFix]])**2 + (-sep_ylocs[indsToFix]-y[afflictedIndsxy[indsToFix]])**2) #calculate error for indsToFix
-    seps_decidingmp = np.sqrt((-sep_xlocs[indsToFix]-x[afflictedIndsxy[indsToFix]])**2 + (sep_ylocs[indsToFix]-y[afflictedIndsxy[indsToFix]])**2) #calculate error for indsToFix
-    seps_decidingmm = np.sqrt((-sep_xlocs[indsToFix]-x[afflictedIndsxy[indsToFix]])**2 + (-sep_ylocs[indsToFix]-y[afflictedIndsxy[indsToFix]])**2) #calculate error for indsToFix
+    seps_decidingpm = np.sqrt((sep_xlocs[indsToFix]-x[afflictedIndsxy[indsToFix]])**2. + (-sep_ylocs[indsToFix]-y[afflictedIndsxy[indsToFix]])**2.) #calculate error for indsToFix
+    seps_decidingmp = np.sqrt((-sep_xlocs[indsToFix]-x[afflictedIndsxy[indsToFix]])**2. + (sep_ylocs[indsToFix]-y[afflictedIndsxy[indsToFix]])**2.) #calculate error for indsToFix
+    seps_decidingmm = np.sqrt((-sep_xlocs[indsToFix]-x[afflictedIndsxy[indsToFix]])**2. + (-sep_ylocs[indsToFix]-y[afflictedIndsxy[indsToFix]])**2.) #calculate error for indsToFix
 
     #error_decidingpm = -np.abs(np.ones(len(seps_decidingpm)) - seps_decidingpm) #calculate errors for swapping y of the candidated to swap y for
     #error_decidingmp = -np.abs(np.ones(len(seps_decidingmp)) - seps_decidingmp) #calculate errors for swapping y of the candidated to swap y for
@@ -1711,12 +1713,12 @@ def intersectionFixer_pm(x, y, sep_xlocs, sep_ylocs, afflictedIndsxy, rs):
     error_deciding = np.stack((error[indsToFix],np.abs(rs[indsToFix] - seps_decidingpm),np.abs(rs[indsToFix] - seps_decidingmp),np.abs(rs[indsToFix] - seps_decidingmm)),axis=1)
 
 
-    minErrorInds = np.argmin(error_deciding,axis=1)
+    minErrorInds = np.argmin(error_deciding,axis=1) #Takes the minimum of the 4 error_deciding choices for each indsToFix
 
     tmpxlocs = np.asarray([sep_xlocs,sep_xlocs,-sep_xlocs,-sep_xlocs]).T
-    sep_xlocs[indsToFix] = tmpxlocs[indsToFix,minErrorInds]
+    sep_xlocs_out[indsToFix] = tmpxlocs[indsToFix,minErrorInds]
     tmpylocs = np.asarray([sep_ylocs,-sep_ylocs,sep_ylocs,-sep_ylocs]).T
-    sep_ylocs[indsToFix] = tmpylocs[indsToFix,minErrorInds]
+    sep_ylocs_out[indsToFix] = tmpylocs[indsToFix,minErrorInds]
 
     #indsToSwap = np.where(np.abs(error_deciding) < np.abs(error[indsToFix]))[0] #find where the errors produced by swapping y is lowered
     #sep_ylocs[indsToFix[indsToSwap]] = -sep_ylocs[indsToFix[indsToSwap]] #here we fix the y values where they should be fixed by swapping y values
@@ -1724,7 +1726,7 @@ def intersectionFixer_pm(x, y, sep_xlocs, sep_ylocs, afflictedIndsxy, rs):
     #error = np.abs(np.sort(-np.abs(np.ones(len(seps)) - seps)))
     #indsToFix = np.argsort(-np.abs(np.ones(len(seps)) - seps))[np.where(error > 1e-7)[0]]
 
-    return sep_xlocs, sep_ylocs
+    return sep_xlocs_out, sep_ylocs_out
 
 #### Calculate True Anomalies of Points
 def trueAnomaliesOfPoints(minSepPoints_x_dr, minSepPoints_y_dr, maxSepPoints_x_dr, maxSepPoints_y_dr, lminSepPoints_x_dr, lminSepPoints_y_dr, lmaxSepPoints_x_dr, lmaxSepPoints_y_dr,\

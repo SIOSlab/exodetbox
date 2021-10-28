@@ -460,9 +460,12 @@ def plotDerotatedIntersectionsMinMaxStarLocBounds(ind, sma, e, W, w, inc, x, y, 
     lmaxSepPoints_x, lmaxSepPoints_y, twoIntSameYInds,\
     maxSepPoints_x, maxSepPoints_y, twoIntOppositeXInds, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2,\
     type0_0Inds, type0_1Inds, type0_2Inds, type0_3Inds, type0_4Inds, type1_0Inds, type1_1Inds, type1_2Inds, type1_3Inds, type1_4Inds,\
-    type2_0Inds, type2_1Inds, type2_2Inds, type2_3Inds, type2_4Inds, type3_0Inds, type3_1Inds, type3_2Inds, type3_3Inds, type3_4Inds, num):
+    type2_0Inds, type2_1Inds, type2_2Inds, type2_3Inds, type2_4Inds, type3_0Inds, type3_1Inds, type3_2Inds, type3_3Inds, type3_4Inds, num, s_circ=None):
     """
     """
+    if s_circ is None: #defines the circle radius
+        s_circ = np.ones(len(sma),dtype=float)
+
     plt.close(num)
     fig = plt.figure(num=num)
     plt.rc('axes',linewidth=2)
@@ -524,8 +527,8 @@ def plotDerotatedIntersectionsMinMaxStarLocBounds(ind, sma, e, W, w, inc, x, y, 
         plt.scatter(lmaxSepPoints_x[tind], lmaxSepPoints_y[tind],color='gold',marker='D')
 
     #### r Intersection test
-    x_circ2 = np.cos(vs)
-    y_circ2 = np.sin(vs)
+    x_circ2 = s_circ[ind]*np.cos(vs)
+    y_circ2 = s_circ[ind]*np.sin(vs)
     plt.plot(x[ind]+x_circ2,y[ind]+y_circ2,color='green')
     #### Intersection Points
     if ind in yrealAllRealInds[fourIntInds]:

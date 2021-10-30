@@ -5,6 +5,8 @@ Methods for finding planets sharing a common (s,dmag)
 [![astropy](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org/)
 
 
+Keithly D., Savransky D., Spohn C., Integration Time Adjusted Completeness, J. of Astronomical Telescopes, Instruments, and Systems, 7(3), 037002 (2021). https://doi.org/10.1117/1.JATIS.7.3.037002
+
 ## Brown2010DynamicCompletenessReplication.py
 Plots Dynamic Completeness using Brown 2010's method as implemented by Corey Spohn using both the Lambert phase function and Quasi-Lambert phase function
 Runs Dynamic Completeness (a method in this script) using the exodetbox methods in projectedEllipse and plots the revisit completeness and dynamic completeness.

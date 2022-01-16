@@ -25,8 +25,8 @@ PPoutpath = './'
 
 #### Randomly Generate Orbits
 folder_load = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/exo-det-box/exo-det-box/convergence_data/'))
-filename = 'HabEx_CKL2_PPKL2.json'
-filename = 'WFIRSTcycle6core.json'
+#filename = 'HabEx_CKL2_PPKL2.json'
+#filename = 'WFIRSTcycle6core.json'
 filename = 'HabEx_CSAG13_PPSAG13_compSubtype.json'
 #filename = 'HabEx_CSAG13_PPSAG13_compSubtypeHighEccen.json'
 scriptfile = os.path.join(folder_load,filename)
@@ -69,21 +69,29 @@ starMass = const.M_sun
 
 periods = (2.*np.pi*np.sqrt((sma*u.AU)**3./(const.G.to('AU3 / (kg s2)')*starMass))).to('year').value
 
-#Random time past periastron of first observation
+#Random time past periastron of first observation for each planet
 tobs1 = np.random.rand(len(periods))*periods*u.year.to('day')
 
+#Calculate nus of intersections when find which nu ranges each planet is visible in
 nus, planetIsVisibleBool = planetVisibilityBounds(sma,e,W,w,inc,p,Rp,starMass,plotBool, s_inner, s_outer, dmag_upper, dmag_lower=None) #Calculate planet-star nu edges and visible regions
+#compute time from true anomaly using the provided periods
 ts = timeFromTrueAnomaly(nus,np.tile(periods,(18,1)).T*u.year.to('day'),np.tile(e,(18,1)).T) #Calculate the planet-star intersection edges
+#calculate the delta t of each time window
 dt = ts[:,1:] - ts[:,:-1] #Calculate time region widths
+#Assume the integration time (for purposes of integration time adjusted completeness) is 0
 maxIntTime = 0.
 gtIntLimit = dt > maxIntTime #Create boolean array for inds
+#compute total visible time per target
 totalVisibleTimePerTarget = np.nansum(np.multiply(np.multiply(dt-maxIntTime,planetIsVisibleBool.astype('int')),gtIntLimit),axis=1) #We subtract the int time from the fraction of observable time
+#Compute completeness using the fraction of orbits each planet is visible
 totalCompleteness = np.divide(totalVisibleTimePerTarget,periods*u.year.to('day')) # Fraction of time each planet is visible of its period
 
 ts2 = ts[:,0:8] #cutting out all the nans
 planetIsVisibleBool2 = planetIsVisibleBool[:,0:7] #cutting out all the nans
 
 
+######### ACTUALLY CALCULATE DYNAMIC COMPLETENESS #########################
+#Compute Dynamic completeness for the planets given the time windows they are visible per orbit and the starting time window
 timingStart = time.time()
 trange = np.linspace(start=0.,stop=365.*13.,num=1000)
 dynComps = list()
@@ -94,7 +102,11 @@ for k in np.arange(len(trange)):
     revisitComps.append(revisitComp)
 timingStop = time.time()
 print('time: ' + str(timingStop-timingStart))
+#############################################################
 
+
+
+#Vestigal plots
 # num=8883354345321811
 # plt.figure(num=num)
 # plt.rc('axes',linewidth=2)
@@ -111,6 +123,9 @@ print('time: ' + str(timingStop-timingStart))
 # plt.show(block=False)
 
 
+
+
+#### COMPUTE DYNAMIC COMPLETENESS FOR DIFFERENT PLANET SUBTYPES
 #TODO make tranges for each subtype different based on the subtype
 dynCompDict = {}
 for i,j in itertools.product(np.arange(np.min(bini),np.max(bini)+1), np.arange(np.min(binj),np.max(binj)+1)):

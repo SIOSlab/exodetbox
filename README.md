@@ -4,6 +4,12 @@ Methods for finding planets sharing a common (s,dmag)
 
 [![astropy](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org/)
 
+## For Beginners
+For a new person to exodetbox but experienced with EXOSIMS (or interested in seeing how exodetbox can be applied), the first thing to try is testing_EXOSIMS_IAC.py.
+testing_EXOSIMS_IAC.py instantiates an EXOSIMS Mission Sim object which uses the EXOSIMS "Integration Time Adjusted Completeness" module for computing completeness when comp_calc is called. The EXOSIMS IAC module simply imports "from exodetbox.projectedEllipse import \*" and calls "integrationTimeAdjustedCompletness".
+
+
+
 
 ## Brown2010DynamicCompletenessReplication.py
 Plots Dynamic Completeness using Brown 2010's method as implemented by Corey Spohn using both the Lambert phase function and Quasi-Lambert phase function

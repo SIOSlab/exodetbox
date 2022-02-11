@@ -443,6 +443,26 @@ def quarticCoefficients_ellipse_to_Quarticipynb(a, b, x, y, r):
     """ Calculates coefficients of the quartic expression solving for the intersection between a circle with radius r and ellipse with semi-major axis a
     semi-minor axis b, and the center of the circle at x and y.
     Coefficients for the quartic of form x**4 + A*x**3 + B*x**2 + C*x + D = 0
+    Args:
+        a (numpy array):
+            semi-major axis of the projected ellipse
+        b (numpy array):
+            semi-minor axis of the projected ellipse
+        x (numpy array):
+            x position of the center of the projected ellipse
+        y (numpy array):
+            y position of the center of the projected ellipse
+        r (numpy array):
+            r circle radius
+    Returns:
+        A (numpy array):
+            coefficients of x^3
+        B (numpy array):
+            coefficients of x^2
+        C (numpy array):
+            coefficients of x
+        D (numpy array):
+            constants
     """
     A = -4*a**2*x/(a**2 - b**2)
     B = 2*a**2*(a**2*b**2 - a**2*r**2 + 3*a**2*x**2 + a**2*y**2 - b**4 + b**2*r**2 - b**2*x**2 + b**2*y**2)/(a**4 - 2*a**2*b**2 + b**4)

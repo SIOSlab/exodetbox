@@ -5,6 +5,7 @@ from astropy import constants as const
 import astropy.units as u
 from EXOSIMS.util.deltaMag import deltaMag
 from EXOSIMS.util.planet_star_separation import planet_star_separation
+from scipy.signal import argrelextrema
 
 def projected_apbpPsipsi(a,e,W,w,inc):
     """ Given the KOE of a planet, calculate the semi-paramters of the projected ellipse
@@ -2836,6 +2837,29 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
     nuRealCombSaved = np.concatenate((nuReal,nuReal2),axis=1) #combines the two arrays
     dmagsCombSaved = np.concatenate((gdmags,gdmags2),axis=1) #combines the two arrays
 
+    #### Error Handling for the case where a planet has all nan solutions
+    indsAllNanSols = np.where(np.all(np.isnan(dmagsCombSaved),axis=1))[0]
+    if len(indsAllNanSols) > 0:
+        nusAllNanSols = np.linspace(start=0.,stop=2.*np.pi,num=10**6)
+        for i in np.arange(len(indsAllNanSols)):
+            #manually iterate over dmag to find min and max
+            gPhi2AllNanSols = (1.+np.sin(inc[indsAllNanSols[i]])*np.sin(nusAllNanSols+w[indsAllNanSols[i]]))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
+            gd2AllNanSols = a[indsAllNanSols[i]].to('AU')*(1.-e[indsAllNanSols[i]]**2.)/(e[indsAllNanSols[i]]*np.cos(nusAllNanSols)+1.)
+            gdmags2AllNanSols = deltaMag(p[indsAllNanSols[i]],Rp[indsAllNanSols[i]].to('AU'),gd2AllNanSols,gPhi2AllNanSols) #calculate dmag of the specified x-value
+            indsOfMax = argrelextrema(gdmags2AllNanSols, np.greater)[0]
+            indsOfMin = argrelextrema(gdmags2AllNanSols, np.less)[0]
+            #indOfMax = np.argmax(gdmags2AllNanSols)
+            #indOfMin = np.argmin(gdmags2AllNanSols)
+            #[indsAllNanSols[i]]
+            #Assume there is only a min and a max
+            for j in np.arange(len(indsOfMax)):
+                nuRealComb[indsAllNanSols[i],j] = nusAllNanSols[indsOfMax[j]]
+                dmagsComb[indsAllNanSols[i],j] = gdmags2AllNanSols[indsOfMax[j]]
+            for j in np.arange(len(indsOfMin)):
+                nuRealComb[indsAllNanSols[i],4+j] = nusAllNanSols[indsOfMin[j]]
+                dmagsComb[indsAllNanSols[i],4+j] = gdmags2AllNanSols[indsOfMin[j]]
+    ####
+
     #### Extracting All Extrema ####################################################
     #This section belongs here before we being checking for duplicates for the very simple reason that all the solutions we have come from the function provided.
     #By this logic, the largest value must be the maximum and the smallest value must be the minimum
@@ -3315,8 +3339,26 @@ def calc_planet_sep_extrema(sma,e,W,w,inc):
     #xreal, delta, P, D2, R, delta_0 = quarticSolutions_ellipse_to_Quarticipynb(A.astype('complex128'), B, C, D)
     xreal, _, _, _, _, _ = quarticSolutions_ellipse_to_Quarticipynb(A.astype('complex128'), B, C, D)
     del A, B, C, D #delting for memory efficiency
-    assert np.max(np.nanmin(np.abs(np.imag(xreal)),axis=1)) < 1e-5, 'At least one row has min > 1e-5' #this ensures each row has a solution
-    #myInd = np.where(np.nanmin(np.abs(np.imag(xreal)),axis=1) > 1e-5)
+    
+    #### Identify High Error Inds and Fix Them Preemptively
+    highErrorInds = np.where(np.nanmin(np.abs(np.imag(xreal)),axis=1) > 1e-5)[0] #finds the inds which would cause an assertion error
+    #assert np.max(np.nanmin(np.abs(np.imag(xreal)),axis=1)) < 1e-5, 'At least one row has min > 1e-5' #this ensures each row has a solution
+    if len(highErrorInds) > 0: #some of the imaginary numbers have high error
+        for i in np.arange(len(highErrorInds)):
+            highErrorInds[i]
+            nusHighError = np.linspace(start=0.,stop=2.*np.pi,num=10**6)
+            xHighError,yHighError,zHighError = xyz_3Dellipse(sma,e,W,w,inc,nusHighError)
+            sepsHighError = np.sqrt(xHighError**2.+yHighError**2.)
+            #Go through and find min/max separation
+            indsOfMax = argrelextrema(sepsHighError, np.greater)[0]
+            indsOfMin = argrelextrema(sepsHighError, np.less)[0]
+            for j in np.arange(len(indsOfMax)):
+                xreal[highErrorInds[i],j] = xHighError[indsOfMax[j]]
+            for j in np.arange(len(indsOfMin)):
+                xreal[highErrorInds[i],4+j] = xHighError[indsOfMin[4+j]]
+    ####
+
+    #myInd = np.where(np.nanmin(np.abs(np.imag(xreal)),axis=1) > 1e-5)[0]
     #print('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
     #print(w[np.argmax(np.nanmin(np.abs(np.imag(xreal)),axis=1))]) #prints the argument of perigee (assert above fails on 1.57 or 1.5*pi)
     #Failure of the above occured where w=4.712 which is approx 1.5pi
